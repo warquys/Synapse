@@ -9,9 +9,9 @@ public static class SynapseVersion
 
     public const int Patch = 0;
 
-    public const VersionType Type = VersionType.None;
+    public const VersionType Type = VersionType.Moded;
 
-    public const string SubVersion = "";
+    public const string SubVersion = "VT";
 
     public const string BasedGameVersion = "11.1.0";
 
@@ -49,6 +49,7 @@ public static class SynapseVersion
     {
         None,
         Pre,
-        Dev
+        Dev,
+        Moded
     }
 }

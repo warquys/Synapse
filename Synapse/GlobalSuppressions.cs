@@ -7,3 +7,4 @@ using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("CodeQuality", "IDE0051:Nicht verwendete private Member entfernen", Justification = "Called by Unity", Scope = "member", Target = "~M:Synapse.Api.Events.EventHandler.KeyPress(Synapse.Api.Events.SynapseEventArguments.PlayerKeyPressEventArgs)")]
 [assembly: SuppressMessage("CodeQuality", "IDE0051:Nicht verwendete private Member entfernen", Justification = "For Debug Only", Scope = "member", Target = "~M:Synapse.Api.Player.Update")]
+[assembly: SuppressMessage("CodeQuality", "IDE0051:Nicht verwendete private Member entfernen", Justification = "<Ausstehend>", Scope = "member", Target = "~M:Synapse.Client.Patches.GlobalKickPowerPatch.Postfix(System.Byte@,ServerRoles)")]
