@@ -1,4 +1,12 @@
-﻿using Neuron.Core.Events;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using MEC;
+using Mirror;
+using Neuron.Core;
+using Neuron.Core.Events;
+using Neuron.Core.Logging;
+using Neuron.Core.Events;
 using Neuron.Core.Meta;
 using PlayerStatsSystem;
 using PlayerRoles;
@@ -152,15 +160,14 @@ public class DebugService : Service
                 break;
         }
     }
-    
+
+    private SynapseDummy _dummy;
+
     private void OnKeyPress(KeyPressEvent ev)
     {
+
         switch (ev.KeyCode)
         {
-            case KeyCode.Alpha1:
-                Synapse.Get<ElevatorService>().Elevators.FirstOrDefault(x => x.ElevatorId == 99).MoveToNext();
-                break;
-           
             case KeyCode.Alpha2:
                 var pos = Vector3.zero;
                 var points = WaypointBase.AllWaypoints.Where(x => x != null).Reverse().Take(5);

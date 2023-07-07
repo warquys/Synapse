@@ -19,6 +19,8 @@ public partial class SynapsePlayer
 
     public BroadcastList ActiveBroadcasts { get; }
 
+    public TextHintList ActiveHint { get; }
+    
     public ScpController.MainScpController MainScpController { get; }
 
     public Dictionary<string, object> Data { get; set; } = new();

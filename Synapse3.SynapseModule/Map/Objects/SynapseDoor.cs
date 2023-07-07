@@ -13,13 +13,13 @@ public class SynapseDoor : NetworkSynapseObject, IJoinUpdate
 {
     private readonly MirrorService _mirror;
     private readonly PlayerService _player;
-    
+
     public static Dictionary<SpawnableDoorType, BreakableDoor> Prefab { get; } = new();
 
     public DoorVariant Variant { get; }
-    
+
     public override GameObject GameObject => Variant.gameObject;
-    
+
     public override NetworkIdentity NetworkIdentity => Variant.netIdentity;
 
     protected override NetworkBehaviour NetworkObject => Variant;
@@ -30,12 +30,12 @@ public class SynapseDoor : NetworkSynapseObject, IJoinUpdate
     {
         Map._synapseDoors.Remove(this);
         base.OnDestroy();
-        
+
         if (Parent is SynapseSchematic schematic) schematic._doors.Remove(this);
     }
     
     private string _name;
-    
+
     public DoorType DoorType { get; private set; }
 
     public string Name
@@ -100,7 +100,7 @@ public class SynapseDoor : NetworkSynapseObject, IJoinUpdate
     public bool IsBreakable => Variant is BreakableDoor;
 
     public bool IsPryable => Variant is PryableDoor;
-    
+
     public SpawnableDoorType SpawnableType { get; private set; }
 
     public bool TryBreakDoor()
@@ -193,7 +193,7 @@ public class SynapseDoor : NetworkSynapseObject, IJoinUpdate
         NeedsJoinUpdate = true;
         SetUp(type);
     }
-    
+
     internal SynapseDoor(DoorVariant variant) : this()
     {
         Variant = variant;
@@ -224,8 +224,8 @@ public class SynapseDoor : NetworkSynapseObject, IJoinUpdate
         Map._synapseDoors.Add(this);
         var comp = GameObject.AddComponent<SynapseObjectScript>();
         comp.Object = this;
-        if (Variant.TryGetComponent<DoorNametagExtension>(out var nameTag))
-            _name = nameTag.GetName;
+        if (Variant.TryGetComponent<DoorNametagExtension>(out var nametag))
+            _name = nametag.GetName;
         
         DoorType = Map.GetDoorByName(Name);
 
