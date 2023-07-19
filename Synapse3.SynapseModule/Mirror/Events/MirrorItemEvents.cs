@@ -44,7 +44,7 @@ public class MirrorItemEvents : Service
     {
         NetworkServer.ReplaceHandler<RequestMessage>(OnWeaponRequestMessage);
         NetworkServer.ReplaceHandler<ShotMessage>(OnShotMessage);
-        //NetworkServer.ReplaceHandler<ThrowableNetworkHandler.ThrowableItemRequestMessage>(OnThrowMessage);
+        NetworkServer.ReplaceHandler<ThrowableNetworkHandler.ThrowableItemRequestMessage>(OnThrowMessage);
     }
 
     private void OnThrowMessage(NetworkConnection connection,
@@ -143,7 +143,7 @@ public class MirrorItemEvents : Service
             if (message.Serial != item.Serial) return;
             if (item.Item is not Firearm firearm) return;
 
-            var allow = EventManager.ExecuteEvent(ServerEventType.PlayerReloadWeapon, player.Hub, firearm) &&
+            var allow = EventManager.ExecuteEvent(new PlayerReloadWeaponEvent(player.Hub, firearm)) &&
                         firearm.AttachmentsValue(AttachmentParam.PreventReload) <= 0f;
 
             var ev = new ReloadWeaponEvent(item, ItemInteractState.Finalize, player, false)

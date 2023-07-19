@@ -10,7 +10,7 @@ public interface IVanillaRoom : IRoom
 
     public RoomIdentifier Identifier { get; }
 
-    public FlickerableLightController LightController { get; }
+    public RoomLightController LightController { get; }
 
     public RoomType RoomType { get; }
 }

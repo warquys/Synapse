@@ -66,11 +66,10 @@ public class MirrorPlayerEvents : Service
             var elevator = elevatorChamber.GetSynapseElevator() as SynapseElevator;
             if(elevator == null) break;
             var ev = new CallVanillaElevatorEvent(referenceHub.GetSynapsePlayer(), EventManager.ExecuteEvent(
-                ServerEventType.PlayerInteractElevator, new object[]
-                {
+                new PlayerInteractElevatorEvent(
                     referenceHub,
                     elevatorChamber
-                }), elevator, elevator.Destinations[lvl] as SynapseElevatorDestination);
+                )), elevator, elevator.Destinations[lvl] as SynapseElevatorDestination);
             _playerEvents.CallVanillaElevator.RaiseSafely(ev);
             if (!ev.Allow) break;
             ElevatorManager.TrySetDestination(elevatorGroup, lvl);

@@ -7,13 +7,14 @@ using PluginAPI.Enums;
 using PluginAPI.Events;
 using Synapse3.SynapseModule.Enums;
 using UnityEngine;
+using NwPlayer = PluginAPI.Core.Player;
 
 namespace Synapse3.SynapseModule.Events;
 
 public partial class PlayerEvents
 {
     [PluginEvent(ServerEventType.PlayerUseHotkey)]
-    public void HotKeyHook(IPlayer player, ActionName hotkey)
+    public void HotKeyHook(NwPlayer player, ActionName hotkey)
     {
         var sPlayer = player?.GetSynapsePlayer();
         if (sPlayer == null) return;
@@ -21,7 +22,7 @@ public partial class PlayerEvents
     }
     
     [PluginEvent(ServerEventType.WarheadStart)]
-    public bool WarheadStartHook(bool isAutomatic, IPlayer player, bool isResumed)
+    public bool WarheadStartHook(bool isAutomatic, NwPlayer player, bool isResumed)
     {
         if (player == null) return true;
         var ev = new StartWarheadEvent(player?.GetSynapsePlayer(), true, isResumed);
@@ -30,7 +31,7 @@ public partial class PlayerEvents
     }
 
     [PluginEvent(ServerEventType.PlayerDamage)]
-    public bool PlayerDamageHook(IPlayer player, IPlayer target, DamageHandlerBase damageHandler)
+    public bool PlayerDamageHook(NwPlayer player, NwPlayer target, DamageHandlerBase damageHandler)
     {
         if (player == null) return true;
         var damageAmount = damageHandler is StandardDamageHandler standard ? standard.Damage : -1;
@@ -42,7 +43,7 @@ public partial class PlayerEvents
     }
 
     [PluginEvent(ServerEventType.PlayerRemoveHandcuffs)]
-    public bool PlayerFreeHook(IPlayer player, IPlayer target)
+    public bool PlayerFreeHook(NwPlayer player, NwPlayer target, bool canRemoveHandcuffsAsScp)
     {
         var ev = new FreePlayerEvent(player.GetSynapsePlayer(), true, target.GetSynapsePlayer());
         FreePlayer.RaiseSafely(ev);
@@ -87,7 +88,7 @@ public partial class RoundEvents
     }
 
     [PluginEvent(ServerEventType.WarheadStart)]
-    public bool WarheadStartHook(bool isAutomatic, IPlayer player, bool isResumed)
+    public bool WarheadStartHook(bool isAutomatic, NwPlayer player, bool isResumed)
     {
         if (player != null) return true;
         var ev = new WarheadStartEvent(isResumed, isAutomatic);
@@ -111,7 +112,7 @@ public partial class ServerEvents
 public partial class ScpEvents
 {
     [PluginEvent(ServerEventType.Scp049ResurrectBody)]
-    public bool Scp049ResurrectBodyHook(IPlayer player, IPlayer target, BasicRagdoll body)
+    public bool Scp049ResurrectBodyHook(NwPlayer player, NwPlayer target, BasicRagdoll body)
     {
         var synapse049 = player.GetSynapsePlayer();
         var synapseTarget = target.GetSynapsePlayer();
@@ -122,7 +123,7 @@ public partial class ScpEvents
     }
 
     [PluginEvent(ServerEventType.Scp049StartResurrectingBody)]
-    public bool Scp049StartResurrectingBodyHook(IPlayer player, IPlayer target, BasicRagdoll body, bool canResurrect)
+    public bool Scp049StartResurrectingBodyHook(NwPlayer player, NwPlayer target, BasicRagdoll body, bool canResurrect)
     {
         if (!canResurrect) return true;
         var synapse049 = player?.GetSynapsePlayer();
@@ -135,7 +136,7 @@ public partial class ScpEvents
     }
 
     [PluginEvent(ServerEventType.Scp173BreakneckSpeeds)]
-    public bool Scp173BreakneckSpeedsHook(IPlayer player, bool activate)
+    public bool Scp173BreakneckSpeedsHook(NwPlayer player, bool activate)
     {
         var synapse173 = player.GetSynapsePlayer();
         var ev = new Scp173ActivateBreakneckSpeedEvent(synapse173, activate);
@@ -147,7 +148,7 @@ public partial class ScpEvents
 public partial class ItemEvents
 {
     [PluginEvent(ServerEventType.PlayerHandcuff)]
-    public bool PlayerCuffHook(IPlayer player, IPlayer target)
+    public bool PlayerCuffHook(NwPlayer player, NwPlayer target)
     {
         var synapsePlayer = player.GetSynapsePlayer();
         var synapseTarget = target.GetSynapsePlayer();
@@ -158,7 +159,7 @@ public partial class ItemEvents
     }
 
     [PluginEvent(ServerEventType.PlayerPreCoinFlip)]
-    public PlayerPreCoinFlipCancellationData PlayerFlipCoinHook(IPlayer player)
+    public PlayerPreCoinFlipCancellationData PlayerFlipCoinHook(NwPlayer player)
     {
         var synapsePlayer = player.GetSynapsePlayer();
         var synapseItem = synapsePlayer.Inventory.ItemInHand;
@@ -182,7 +183,7 @@ public partial class MapEvents
     }
 
     [PluginEvent(ServerEventType.WarheadStop)]
-    public bool PlayerCancelWarhead(IPlayer player)
+    public bool PlayerCancelWarhead(NwPlayer player)
     {
         var synapsePlayer = player.GetSynapsePlayer();
         var ev = new CancelWarheadEvent(synapsePlayer, true);

@@ -60,6 +60,8 @@ public static class FlashBangCheckPatch
             if (playersHit > 0)
                 Hitmarker.SendHitmarker(__instance.PreviousOwner.Hub, playersHit);
 
+            ((EffectGrenade)__instance).ServerFuseEnd();
+
             return false;
         }
         catch (Exception ex)

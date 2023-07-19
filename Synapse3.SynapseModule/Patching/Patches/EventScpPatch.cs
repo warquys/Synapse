@@ -177,8 +177,7 @@ public static class Scp079ChangeCameraPatch
             var camera = __instance._switchTarget.GetCamera();
             var cost = __instance.GetSwitchCost(__instance._switchTarget);
             var ev = new Scp079SwitchCameraEvent(player, camera, cost, EventManager.ExecuteEvent(
-                ServerEventType.Scp079CameraChanged, player.Hub,
-                __instance._switchTarget));
+                new Scp079CameraChangedEvent(player.Hub, __instance._switchTarget)));
 
             Scp.Scp079SwitchCamera.RaiseSafely(ev);
             cost = ev.Cost;
@@ -241,15 +240,18 @@ public static class Scp079DoorLockPatch
 
             if (__instance.TargetAction == DoorAction.Locked)
             {
-                if (__instance.GetRemainingCooldown(__instance.LastDoor) > 0f ||
-                    Scp079LockdownRoomAbility.IsLockedDown(__instance.LastDoor) ||
-                    __instance.LostSignalHandler.Lost)
-                    return false;
-                var cost = __instance.GetCostForDoor(DoorAction.Locked, __instance.LastDoor);
-                var ev = new Scp079LockDoorEvent(player, door, false, cost)
+                if (__instance.LostSignalHandler.Lost)
                 {
-                    Allow = EventManager.ExecuteEvent(ServerEventType.Scp079LockDoor, __instance.Owner,
-                        __instance.LastDoor)
+                    return false;
+                }
+
+                __instance._lockTime = NetworkTime.time;
+                __instance.LockedDoor = __instance.LastDoor;
+                var cost = __instance.GetCostForDoor(DoorAction.Locked, __instance.LastDoor);
+                var ev = new Events.Scp079LockDoorEvent(player, door, false, cost)
+                {
+                    Allow = EventManager.ExecuteEvent(
+                        new PluginAPI.Events.Scp079LockDoorEvent(__instance.Owner, __instance.LastDoor))
                 };
                 Scp.Scp079LockDoor.RaiseSafely(ev);
 
@@ -260,18 +262,17 @@ public static class Scp079DoorLockPatch
 
                 if (cost > __instance.AuxManager.CurrentAux)
                     return false;
-                __instance.SetDoorLock(__instance.LastDoor, true);
+                __instance.LockedDoor = __instance.LastDoor;
                 __instance.RewardManager.MarkRooms(__instance.LastDoor.Rooms);
                 InvokeOnServerDoorLocked(__instance.ScpRole, __instance.LastDoor);
                 __instance.AuxManager.CurrentAux -= cost;
             }
-            else
+            else if (__instance.LastDoor == __instance.LockedDoor)
             {
                 var cost = 0;
-                var ev = new Scp079LockDoorEvent(player, door, true, cost)
+                var ev = new Events.Scp079LockDoorEvent(player, door, true, cost)
                 {
-                    Allow = EventManager.ExecuteEvent(ServerEventType.Scp079UnlockDoor, __instance.Owner,
-                        __instance.LastDoor)
+                    Allow = true
                 };
                 Scp.Scp079LockDoor.RaiseSafely(ev);
 
@@ -280,16 +281,16 @@ public static class Scp079DoorLockPatch
                 if (!ev.Allow || cost > __instance.AuxManager.CurrentAux)
                     return false;
 
-                __instance.AuxManager.CurrentAux -= cost;
-                __instance.SetDoorLock(__instance.LastDoor, false);
+                __instance.ServerUnlock();
             }
 
+            __instance.ServerSendRpc(toAll: true);
             return false;
         }
         catch (Exception ex)
         {
             NeuronLogger.For<Synapse>().Error("Scp079 SwitchCamera Event Failed\n" + ex);
-            return false;
+            return true;
         }
     }
 
@@ -338,7 +339,7 @@ public static class Scp079DoorInteractPatch
         catch (Exception ex)
         {
             NeuronLogger.For<Synapse>().Error("Scp079 Scp079DoorLock Event Failed\n" + ex);
-            return false;
+            return true;
         }
     }
 }
@@ -407,7 +408,7 @@ public static class Scp079TeslaPatch
             var cost = __instance._cost;
             var ev = new Scp079TeslaInteractEvent(player, sTesla, cost)
             {
-                Allow = EventManager.ExecuteEvent(ServerEventType.Scp079UseTesla, __instance.Owner, tesla)
+                Allow = EventManager.ExecuteEvent(new Scp079UseTeslaEvent(__instance.Owner, tesla))
             };
             cost = ev.Cost;
 
@@ -462,8 +463,7 @@ public static class Scp079BlackOutRoomPatch
             var cost = __instance._cost;
             var ev = new Scp079BlackOutRoomEvent(player, room, cost)
             {
-                Allow = EventManager.ExecuteEvent(ServerEventType.Scp079BlackoutRoom, __instance.Owner,
-                    __instance._roomController.Room)
+                Allow = EventManager.ExecuteEvent(new Scp079BlackoutRoomEvent( __instance.Owner, __instance._roomController.Room))
             };
 
             Scp.Scp079BlackOutRoom.RaiseSafely(ev);
@@ -511,8 +511,7 @@ public static class Scp079BlackOutZonePatch
             var cost = __instance._cost;
             var ev = new Scp079BlackOutZoneEvent(player, (ZoneType)zone, cost)
             {
-                Allow = EventManager.ExecuteEvent(ServerEventType.Scp079BlackoutZone, __instance.Owner,
-                    __instance._syncZone)
+                Allow = EventManager.ExecuteEvent(new Scp079BlackoutZoneEvent( __instance.Owner, __instance._syncZone))
             };
 
             Scp.Scp079BlackOutZone.RaiseSafely(ev);
@@ -522,7 +521,7 @@ public static class Scp079BlackOutZonePatch
             if (!ev.Allow || cost > __instance.AuxManager.CurrentAux)
                 return false;
 
-            foreach (var light in FlickerableLightController.Instances)
+            foreach (var light in RoomLightController.Instances)
             {
                 if (light.Room.Zone == __instance._syncZone)
                 {
@@ -567,7 +566,7 @@ public static class Scp079ReleaseAllLocksPatch
                 return false;
 
             __instance.AuxManager.CurrentAux -= cost;
-            __instance._lockChanger.ServerUnlockAll();
+            __instance._lockChanger.ServerUnlock();
             return false;
         }
         catch (Exception ex)
@@ -596,10 +595,9 @@ public static class Scp079LockdownRoomPatch
                 var cost = __instance._cost;
                 var player = __instance.Owner.GetSynapsePlayer();
                 var room = __instance.CurrentCamSync.CurrentCamera.Room.GetVanillaRoom();
-                var ev = new Scp079LockdownRoomEvent(player, cost, room)
+                var ev = new Events.Scp079LockdownRoomEvent(player, cost, room)
                 {
-                    Allow = EventManager.ExecuteEvent(ServerEventType.Scp079LockdownRoom, __instance.Owner,
-                        __instance.CurrentCamSync.CurrentCamera.Room)
+                    Allow = EventManager.ExecuteEvent( new PluginAPI.Events.Scp079LockdownRoomEvent(__instance.Owner, __instance.CurrentCamSync.CurrentCamera.Room))
                 };
                 Scp.Scp079LockdownRoom.RaiseSafely(ev);
 
@@ -911,7 +909,7 @@ public static class Scp106AttackPatch
                 }
 
                 ev = new Scp106AttackEvent(scp, victim, __instance._damage, true, __instance._hitCooldown);
-                ev.Allow = EventManager.ExecuteEvent(ServerEventType.Scp106TeleportPlayer, __instance.Owner, __instance._targetHub);
+                ev.Allow = EventManager.ExecuteEvent(new Scp106TeleportPlayerEvent(__instance.Owner, __instance._targetHub));
                 _scp.Scp106Attack.RaiseSafely(ev);
 
                 if (!ev.Allow) return false;
@@ -987,8 +985,7 @@ public static class Scp173AttackSnapPatch
             {
                 var scp = __instance.Owner.GetSynapsePlayer();
                 var ev = new Scp173AttackEvent(scp, target.GetSynapsePlayer(), -1, false);
-                ev.Allow = ev.Allow && EventManager.ExecuteEvent(ServerEventType.Scp173SnapPlayer, __instance.Owner,
-                    __instance._targetHub);
+                ev.Allow = ev.Allow && EventManager.ExecuteEvent(new Scp173SnapPlayerEvent(__instance.Owner, __instance._targetHub));
                 _scp.Scp173Attack.RaiseSafely(ev);
                 var damageHandler = new ScpDamageHandler(scp, ev.Damage, DeathTranslations.Scp173);
 
@@ -1084,9 +1081,9 @@ public static class Scp173AttackTpPatch
 
             var scp = __instance.Owner.GetSynapsePlayer();
             var ev = new Scp173AttackEvent(scp, targetHub.GetSynapsePlayer(), -1, true);
-            ev.Allow = ev.Allow &&
-                       EventManager.ExecuteEvent(ServerEventType.Scp173SnapPlayer, __instance.Owner, targetHub);
+            ev.Allow = EventManager.ExecuteEvent(new Scp173SnapPlayerEvent(__instance.Owner, targetHub));
             _scp.Scp173Attack.RaiseSafely(ev);
+
             if (!ev.Allow) return false;
 
             if (!targetHub.playerStats.DealDamage(new ScpDamageHandler(scp, ev.Damage, DeathTranslations.Scp173)))
@@ -1124,7 +1121,7 @@ public static class Scp939DamagePatch
         {
             var scp = __instance.Attacker.GetSynapsePlayer();
             var victim = ply.GetSynapsePlayer();
-            var ev = new Scp939AttackEvent(scp, victim, __instance.Damage, __instance._damageType);
+            var ev = new Events.Scp939AttackEvent(scp, victim, __instance.Damage, __instance._damageType);
             _scp.Scp939Attack.RaiseSafely(ev);
             __instance.Damage = ev.Damage;
             if (!ev.Allow) __instance.Damage = 0;
@@ -1203,13 +1200,13 @@ public static class PlayerEscapePocketDimensionPatch
 
             if (!ev.EscapePocket)
             {
-                if (!EventManager.ExecuteEvent(ServerEventType.PlayerExitPocketDimension, hub, false))
+                if (!EventManager.ExecuteEvent(new PlayerExitPocketDimensionEvent( hub, false)))
                     return false;
                 hub.playerStats.DealDamage(new UniversalDamageHandler(-1f, DeathTranslations.PocketDecay));
             }
             else
             {
-                if (!EventManager.ExecuteEvent(ServerEventType.PlayerExitPocketDimension, hub, true))
+                if (!EventManager.ExecuteEvent(new PlayerExitPocketDimensionEvent(hub, true)))
                     return false;
                 fpcRole.FpcModule.ServerOverridePosition(ev.EscapePosition, Vector3.zero);
                 hub.playerEffectsController.EnableEffect<Disabled>(10f, addDuration: true);
@@ -1250,7 +1247,7 @@ public static class Scp173TantrumPatch
 
             var ev = new Scp173PlaceTantrumEvent(player, player.MainScpController.Scp173.TantrumCoolDown)
             {
-                Allow = EventManager.ExecuteEvent(ServerEventType.Scp173CreateTantrum, __instance.Owner)
+                Allow = EventManager.ExecuteEvent(new Scp173CreateTantrumEvent(__instance.Owner))
             };
 
             _scp.Scp173PlaceTantrum.RaiseSafely(ev);
@@ -1265,7 +1262,7 @@ public static class Scp173TantrumPatch
             NetworkServer.Spawn(tantrumEnvironmentalHazard.gameObject);
             foreach (TeslaGate teslaGate in TeslaGateController.Singleton.TeslaGates)
             {
-                if (teslaGate.PlayerInIdleRange(__instance.Owner))
+                if (teslaGate.IsInIdleRange(__instance.Owner))
                 {
                     teslaGate.TantrumsToBeDestroyed.Add(tantrumEnvironmentalHazard);
                 }

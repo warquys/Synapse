@@ -128,10 +128,10 @@ public class SynapseLocker : StructureSyncSynapseObject, IJoinUpdate
             {
                 NetworkServer.Destroy(pickupBase.gameObject);
             }
-            else
+            else if (pickupBase.TryGetComponent<Rigidbody>(out var rigidbody))
             {
-                pickupBase.Rb.isKinematic = false;
-                pickupBase.Rb.useGravity = true;
+                rigidbody.isKinematic = false;
+                rigidbody.useGravity = true;
             }
         }
 

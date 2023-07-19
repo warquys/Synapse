@@ -14,7 +14,7 @@ public class SynapseRoom : IVanillaRoom
     {
         Identifier = identifier;
         RoomType = type;
-        LightController = Identifier.GetComponentInChildren<FlickerableLightController>();
+        LightController = Identifier.GetComponentInChildren<RoomLightController>();
 
         foreach (var door in Synapse.Get<MapService>().SynapseDoors)
         {
@@ -41,7 +41,7 @@ public class SynapseRoom : IVanillaRoom
     public Vector3 Position => GameObject.transform.position;
     public Quaternion Rotation => GameObject.transform.rotation;
     public GameObject GameObject => Identifier.gameObject;
-    public FlickerableLightController LightController { get; }
+    public RoomLightController LightController { get; }
 
     public string Name => RoomType.ToString();
     public RoomType RoomType { get; }
@@ -86,12 +86,8 @@ public class SynapseRoom : IVanillaRoom
 
     public Color RoomColor
     {
-        get => LightController.Network_warheadLightColor;
-        set
-        {
-            LightController.Network_warheadLightColor = value == default ? FlickerableLightController.DefaultWarheadColor : value;
-            LightController.Network_warheadLightOverride = value != default;
-        }
+        get => LightController.NetworkOverrideColor;
+        set => LightController.NetworkOverrideColor = value;
     }
 
 

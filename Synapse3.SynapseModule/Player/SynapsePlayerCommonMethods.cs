@@ -15,6 +15,7 @@ using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Role;
 using UnityEngine;
+using DamageType = Synapse3.SynapseModule.Enums.DamageType;
 
 namespace Synapse3.SynapseModule.Player;
 
@@ -314,7 +315,7 @@ public partial class SynapsePlayer
                 return;
         }
 
-        if (!EventManager.ExecuteEvent(ServerEventType.PlayerEscape, Hub, vanillaRole)) return;
+        if (!EventManager.ExecuteEvent(new PlayerEscapeEvent(Hub, vanillaRole))) return;
 
         switch (ev.EscapeType)
         {

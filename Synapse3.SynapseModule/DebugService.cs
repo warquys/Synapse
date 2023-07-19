@@ -1,35 +1,22 @@
-﻿using Neuron.Core.Events;
-using Neuron.Core.Meta;
-using Synapse3.SynapseModule.Events;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using AdminToys;
-using MapGeneration;
 using MEC;
 using Mirror;
 using Neuron.Core;
+using Neuron.Core.Events;
+using Neuron.Core.Meta;
 using PlayerRoles;
-using RelativePositioning;
+using Synapse3.SynapseModule.Config;
 using Synapse3.SynapseModule.Dummy;
 using Synapse3.SynapseModule.Enums;
-using Synapse3.SynapseModule.Map.Elevators;
+using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Map.Objects;
 using Synapse3.SynapseModule.Map.Rooms;
 using Synapse3.SynapseModule.Map.Schematic;
 using Synapse3.SynapseModule.Player;
-using UnityEngine;
-using MapGeneration.Distributors;
-using PluginAPI.Core.Zones.Heavy;
-using Synapse3.SynapseModule.Map;
-using System.Diagnostics.Eventing.Reader;
-using PluginAPI.Core;
-using InventorySystem.Items.ThrowableProjectiles;
-using InventorySystem;
-using Synapse3.SynapseModule.Item;
 using Synapse3.SynapseModule.Role;
-using Synapse3.SynapseModule.Config;
+using UnityEngine;
 
 namespace Synapse3.SynapseModule;
 
@@ -145,75 +132,9 @@ public class DebugService : Service
         switch (ev.KeyCode)
         {
             case KeyCode.Alpha1:
-                Synapse.Get<ElevatorService>().Elevators.FirstOrDefault(x => x.ElevatorId == 99).MoveToNext();
+                ev.Player.Room.RoomColor = Color.red;
+                Timing.CallDelayed(2, () => ev.Player.Room.RoomColor = default);
                 break;
-           
-            case KeyCode.Alpha2:
-                var pos = Vector3.zero;
-                var points = WaypointBase.AllWaypoints.Where(x => x != null).Reverse().Take(5);
-                foreach (var waypoint in points)
-                {
-                    switch (waypoint)
-                    {
-                        case NetIdWaypoint netIdWaypoint:
-                            pos = netIdWaypoint.transform.position;
-                            break;
-                            
-                        case ElevatorWaypoint elevatorWaypoint:
-                            pos = elevatorWaypoint.ElevatorTransform.position;
-                            break;
-                            
-                        default:
-                            Logger.Warn("Other Waypoint?");
-                            break;
-                    }
-                
-                    Logger.Warn(Synapse.Get<RoomService>().Rooms
-                                    .OrderBy(x => Vector3.Distance(ev.Player.Position, x.Position)).First().Name +
-                                " " +
-                                pos);    
-                }
-                
-                break;
-            case KeyCode.Alpha3:
-                new SynapseRagDoll(RoleTypeId.ClassD, ev.Player.Position, Quaternion.identity, Vector3.one, ev.Player,
-                    DamageType.Unknown, "Elevator Dummy")
-                {
-                    MoveInElevator = true
-                };
-                break;
-
-            case KeyCode.Alpha4:
-                ev.Player.SendFakeEffectIntensity(Effect.Concussed, 1);
-                break;
-
-            case KeyCode.Alpha5:
-                var dummy2 = SpawnDebugRole(ev.Player);
-                dummy2.Player.FakeRoleManager.VisibleRole = RoleTypeId.ClassD;
-                break;
-
-                /* case KeyCode.Alpha4:
-                     SpawnDebugShematic(ev.Player);
-                     break;
-
-
-                 case KeyCode.Alpha5:
-                     //The generator start to flick
-                     Schematic.HideFromAll();
-                     break;
-                 case KeyCode.Alpha6:
-                     Schematic.ShowAll();
-                     break;
-                 case KeyCode.Alpha7:
-                     Schematic.HideFromPlayer(ev.Player);
-                     break;
-                 case KeyCode.Alpha8:
-                     Schematic.ShowPlayer(ev.Player);
-                     break;
-                 case KeyCode.Alpha9:
-                     Schematic.Position = ev.Player.Position;
-                     break;*/
-
         }
     }
 

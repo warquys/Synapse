@@ -127,6 +127,8 @@ public class RoleService : Service
         return role != null && _customRoles.Remove(role);
     }
 
+    //TODO: Add GetSpawnPoint.
+
     public TRole GetRole<TRole>()
         where TRole : SynapseRole
     {

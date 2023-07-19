@@ -9,6 +9,8 @@ using MapGeneration.Distributors;
 using Mirror;
 using Neuron.Core.Logging;
 using Neuron.Core.Meta;
+using PluginAPI.Core.Items;
+using PluginAPI.Core;
 using Synapse3.SynapseModule.Item;
 using UnityEngine;
 using Utils;
@@ -105,11 +107,10 @@ public static class ServerCreatePickupPatch
 {
     private static readonly ItemService ItemService;
     static ServerCreatePickupPatch() => ItemService = Synapse.Get<ItemService>();
-
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(InventoryExtensions), nameof(InventoryExtensions.ServerCreatePickup))]
-    public static bool ServerCreatePickup(ref ItemPickupBase __result, Inventory inv, ItemBase item, PickupSyncInfo psi,
-        bool spawn)
+    [HarmonyPatch(typeof(InventoryExtensions), nameof(InventoryExtensions.ServerCreatePickup), typeof(ItemBase), typeof(PickupSyncInfo), typeof(Vector3), typeof(Quaternion), typeof(bool), typeof(Action<ItemPickupBase>))]
+    public static bool ServerCreatePickup(ref ItemPickupBase __result, ItemBase item, PickupSyncInfo psi, Vector3 position, 
+        Quaternion rotation, bool spawn, Action<ItemPickupBase> setupMethod)
     {
         try
         {
@@ -127,7 +128,12 @@ public static class ServerCreatePickupPatch
                 synapseItem = new SynapseItem(item.ItemTypeId);
             }
 
-            synapseItem.Drop(inv.transform.position);
+            if (spawn)
+            {
+                synapseItem.Drop(position);
+                synapseItem.Rotation = rotation;
+            }
+
             __result = synapseItem.Pickup;
         }
         catch (Exception ex)
@@ -189,20 +195,23 @@ public static class SpawnPickupPatch
         {
             if (ipb == null) return false;
             NetworkServer.Spawn(ipb.gameObject);
+            
 
             var serial = ItemSerialGenerator.GenerateNext();
 
             var transform = ipb.transform;
-            var info = new PickupSyncInfo(ipb.Info.ItemId, transform.position, transform.rotation, ipb.Info.Weight,
-                serial)
+            ipb.Position = transform.position;
+            ipb.Rotation = transform.rotation;
+
+            var info = new PickupSyncInfo(ipb.Info.ItemId, ipb.Info.WeightKg, serial)
             {
-                Locked = ipb.Info.Locked
+                Locked = ipb.Info.Locked,
             };
 
             InitiallySpawnedItems.Singleton.AddInitial(info.Serial);
             ipb.NetworkInfo = info;
             ipb.Info = info;
-            ipb.InfoReceived(default, info);
+            ipb.InfoReceivedHook(default, info);
             _ = new SynapseItem(ipb);
         }
         catch (Exception ex)

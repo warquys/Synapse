@@ -36,6 +36,7 @@ using Synapse3.SynapseModule.Item;
 using UnityEngine;
 using VoiceChat;
 using VoiceChat.Networking;
+using DamageType = Synapse3.SynapseModule.Enums.DamageType;
 
 namespace Synapse3.SynapseModule.Patching.Patches;
 
@@ -208,7 +209,7 @@ public static class DoorInteractPatch
                 }
             }
 
-            var nwAllow = EventManager.ExecuteEvent(ServerEventType.PlayerInteractDoor, ply, __instance, allow);
+            var nwAllow = EventManager.ExecuteEvent(new PlayerInteractDoorEvent(ply, __instance, allow));
             var ev = new DoorInteractEvent(player, allow && nwAllow, door.GetSynapseDoor(), bypassDenied);
             PlayerEvents.DoorInteract.RaiseSafely(ev);
 
@@ -546,7 +547,7 @@ public static class PlaceBulletHolePatch
             var player = __instance.Hub.GetSynapsePlayer();
             if (player == null) return false;
 
-            var ev = new PlaceBulletHoleEvent(player, true, hit.point);
+            var ev = new Events.PlaceBulletHoleEvent(player, true, hit.point);
             Player.PlaceBulletHole.RaiseSafely(ev);
 
             return ev.Allow;
@@ -761,8 +762,8 @@ public static class LockerInteractPatch
             var locker = __instance.GetSynapseLocker();
             var ev = new LockerUseEvent(player, hasPerms, locker, locker.Chambers[colliderId])
             {
-                Allow = EventManager.ExecuteEvent(ServerEventType.PlayerInteractLocker, ply, __instance,
-                    __instance.Chambers[colliderId], hasPerms)
+                Allow = EventManager.ExecuteEvent(new PlayerInteractLockerEvent(ply, __instance,
+                    __instance.Chambers[colliderId], hasPerms))
             };
             Player.LockerUse.RaiseSafely(ev);
 

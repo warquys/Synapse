@@ -167,8 +167,8 @@ public static class Synapse3Extensions
 
     public static SynapsePlayer GetSynapsePlayer(this StatBase stat) => stat.Hub.GetSynapsePlayer();
     public static SynapsePlayer GetSynapsePlayer(this Footprint footprint) => footprint.Hub?.GetSynapsePlayer();
-    public static SynapsePlayer GetSynapsePlayer(this IPlayer player) => player?.ReferenceHub?.GetSynapsePlayer();
-
+    public static SynapsePlayer GetSynapsePlayer(this PluginAPI.Core.Player player) => player?.ReferenceHub?.GetSynapsePlayer();
+    
     public static SynapsePlayer GetSynapsePlayer<TScpRole>(this ScpStandardSubroutine<TScpRole> role)
         where TScpRole : PlayerRoleBase
         => role.Owner.GetSynapsePlayer();

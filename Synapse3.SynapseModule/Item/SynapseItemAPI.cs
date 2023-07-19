@@ -111,15 +111,16 @@ public partial class SynapseItem
         {
             ItemId = ItemType,
             Serial = Serial,
-            Weight = Weight,
+            WeightKg = Weight,
             Locked = !CanBePickedUp,
         };
-        info.ServerSetPositionAndRotation(position, rot);
+        Pickup.Position = position;
+        Pickup.Rotation = rot;
         Pickup.Info = info;
         Pickup.NetworkInfo = info;
         Pickup.transform.localScale = Scale;
         NetworkServer.Spawn(Pickup.gameObject);
-        Pickup.InfoReceived(default, info);
+        Pickup.InfoReceivedHook(default, info);
         SetState(ItemState.Map);
         CreateSchematic();
         

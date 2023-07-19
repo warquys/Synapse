@@ -117,7 +117,7 @@ public partial class SynapsePlayer
                     break;
             }
 
-            writer.WriteRelativePosition(new RelativePosition(0, 0, 0, 0));
+            writer.WriteRelativePosition(new RelativePosition(Vector3.zero));
             
             if (prevRole is FpcStandardRoleBase prevFpcRole)
             {

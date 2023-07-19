@@ -168,7 +168,7 @@ public static class TeamSelectPatch
                     var ev = new SelectTeamEvent
                     {
                         TeamId = (uint)dominatingTeam,
-                        Reset = !EventManager.ExecuteEvent(ServerEventType.TeamRespawnSelected, dominatingTeam),
+                        Reset = !EventManager.ExecuteEvent(new TeamRespawnSelectedEvent(dominatingTeam)),
                     };
                     _round.SelectTeam.RaiseSafely(ev);
                     var nextTeam = ev.TeamId;
@@ -382,9 +382,9 @@ public static class DecoratedRoundMethods
 
             if (!RoundService.ForceEnd && !summary._roundEnded) continue;
 
-            RoundEvents.End.RaiseSafely(new RoundEndEvent(leadingTeam));
+            RoundEvents.End.RaiseSafely(new Events.RoundEndEvent(leadingTeam));
 
-            if (!EventManager.ExecuteEvent(ServerEventType.RoundEnd, leadingTeam)) continue;
+            if (!EventManager.ExecuteEvent(new PluginAPI.Events.RoundEndEvent(leadingTeam))) continue;
             FriendlyFireConfig.PauseDetector = true;
 
             var log =

@@ -224,7 +224,7 @@ public class TeamService : Service
                 if (!RespawnManager.SpawnableTeams.TryGetValue((SpawnableTeamType)NextTeam, out var handlerBase))
                     goto ResetTeam;
 
-                if (!EventManager.ExecuteEvent(ServerEventType.TeamRespawn, (SpawnableTeamType)NextTeam))
+                if (!EventManager.ExecuteEvent(new TeamRespawnEvent((SpawnableTeamType)NextTeam, players.Select(p => (ReferenceHub)p).ToList())))
                 {
                     RespawnEffectsController.ExecuteAllEffects(RespawnEffectsController.EffectType.UponRespawn, (SpawnableTeamType)NextTeam);
                     break;

@@ -168,7 +168,7 @@ public partial class SynapseItem : DefaultSynapseObject, IHideable
             ItemCategory = exampleBase.Category;
             TierFlags = exampleBase.TierFlags;
         }
-        Weight = pickupBase.Info.Weight;
+        Weight = pickupBase.Info.WeightKg;
 
         State = ItemState.Map;
 
@@ -222,10 +222,10 @@ public partial class SynapseItem : DefaultSynapseObject, IHideable
         Scale = configuration.Scale;
         CanBePickedUp = configuration.CanBePickedUp;
         
-        if (!configuration.Physics)
+        if (!configuration.Physics && Pickup.TryGetComponent<Rigidbody>(out var rigidbody))
         {
-            Pickup.Rb.useGravity = false;
-            Pickup.Rb.isKinematic = true;
+            rigidbody.useGravity = false;
+            rigidbody.isKinematic = true;
         }
         
         Parent = schematic;

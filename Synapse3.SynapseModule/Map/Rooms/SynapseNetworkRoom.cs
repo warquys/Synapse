@@ -21,7 +21,7 @@ public class SynapseNetworkRoom : NetworkSynapseObject, IVanillaRoom
         RoomType = type;
         NetworkIdentity = GetNetworkIdentity(type);
         NetworkObject = null;
-        LightController = Identifier.GetComponentInChildren<FlickerableLightController>();
+        LightController = Identifier.GetComponentInChildren<RoomLightController>();
 
         foreach (var door in Synapse.Get<MapService>().SynapseDoors)
         {
@@ -41,7 +41,7 @@ public class SynapseNetworkRoom : NetworkSynapseObject, IVanillaRoom
     }
 
     public RoomIdentifier Identifier { get; }
-    public FlickerableLightController LightController { get; }
+    public RoomLightController LightController { get; }
     public override NetworkIdentity NetworkIdentity { get; }
     protected override NetworkBehaviour NetworkObject { get; }
     public override GameObject GameObject => Identifier.gameObject;
@@ -121,12 +121,8 @@ public class SynapseNetworkRoom : NetworkSynapseObject, IVanillaRoom
 
     public Color RoomColor
     {
-        get => LightController.Network_warheadLightColor;
-        set
-        {
-            LightController.Network_warheadLightColor = value == default ? FlickerableLightController.DefaultWarheadColor : value;
-            LightController.Network_warheadLightOverride = value != default;
-        }
+        get => LightController.NetworkOverrideColor;
+        set => LightController.NetworkOverrideColor = value;
     }
 
     private List<SynapseDoor> _doors = new List<SynapseDoor>();

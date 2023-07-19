@@ -10,10 +10,10 @@ public partial class SynapseItem
         get
         {
             if (Throwable.Projectile != null)
-                return Throwable.Projectile.transform.position;
+                return Throwable.Projectile.Position;
 
             if (Pickup != null)
-                return Pickup.Info.Position;
+                return Pickup.Position;
             
             if (Item != null)
                 return ItemOwner?.Position ?? _position;
@@ -26,14 +26,14 @@ public partial class SynapseItem
 
             if (Pickup != null)
             {
-                Pickup.Rb.position = value;
-                Pickup.RefreshPositionAndRotation();
+                Pickup.Position = value;
+                //Pickup.RefreshPositionAndRotation();
             }
 
             if (Throwable.Projectile != null)
             {
-                Throwable.Projectile.transform.position = value;
-                Throwable.Projectile.RefreshPositionAndRotation();
+                Throwable.Projectile.Position = value;
+                //Throwable.Projectile.RefreshPositionAndRotation();
             }
         }
     }
@@ -51,7 +51,7 @@ public partial class SynapseItem
                 return ItemOwner?.Rotation ?? _rotation;
 
             if (Pickup is not null)
-                return Pickup.Info.Rotation;
+                return Pickup.Rotation;
 
             return _rotation;
         }
@@ -61,14 +61,14 @@ public partial class SynapseItem
 
             if (Pickup is not null)
             {
-                Pickup.Rb.rotation = value;
-                Pickup.RefreshPositionAndRotation();
+                Pickup.Rotation = value;
+                //Pickup.RefreshPositionAndRotation();
             }
 
             if (Throwable.Projectile is not null)
             {
-                Throwable.Projectile.transform.rotation = value;
-                Throwable.Projectile.RefreshPositionAndRotation();
+                Throwable.Projectile.Rotation = value;
+                //Throwable.Projectile.RefreshPositionAndRotation();
             }
         }
     }

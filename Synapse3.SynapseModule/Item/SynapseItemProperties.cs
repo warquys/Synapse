@@ -40,7 +40,7 @@ public partial class SynapseItem
             {
                 Pickup.Info.Locked = !value;
                 Pickup.NetworkInfo = Pickup.Info;
-                Pickup.InfoReceived(default,Pickup.Info);
+                Pickup.InfoReceivedHook(default,Pickup.Info);
             }
         }
     }

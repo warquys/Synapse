@@ -46,7 +46,7 @@ public static class ConsumeItemPatch
                     var ev = new ConsumeItemEvent(player.Inventory.ItemInHand, ItemInteractState.Start, player,
                         UsableItemsController.GetCooldown(msg.ItemSerial, usableItem, handler), handler);
                     ev.Allow = ev.RemainingCoolDown <= 0 &&
-                               EventManager.ExecuteEvent(ServerEventType.PlayerUseItem, player.Hub, usableItem);
+                               EventManager.ExecuteEvent(new PlayerUseItemEvent(player.Hub, usableItem));
                     ItemEvents.ConsumeItem.RaiseSafely(ev);
 
                     if (!ev.Allow && ev.RemainingCoolDown > 0f)
@@ -76,8 +76,8 @@ public static class ConsumeItemPatch
                         handler)
                     {
                         Allow = remainingCoolDownToCancel > 0 && EventManager.ExecuteEvent(
-                            ServerEventType.PlayerCancelUsingItem, player.Hub,
-                            handler.CurrentUsable.Item)
+                            new PlayerCancelUsingItemEvent(player.Hub,
+                            handler.CurrentUsable.Item))
                     };
                     ItemEvents.ConsumeItem.RaiseSafely(ev);
 
@@ -160,7 +160,7 @@ public static class ConsumeItemPatch
 
                 if (Time.timeSinceLevelLoad < usable.StartTime + usable.Item.UseTime / speed) continue;
 
-                var allow = EventManager.ExecuteEvent(ServerEventType.PlayerUsedItem, handler.Key, usable.Item);
+                var allow = EventManager.ExecuteEvent(new PlayerUsedItemEvent(handler.Key, usable.Item));
                 var ev = new ConsumeItemEvent(usable.Item.GetItem(), ItemInteractState.Finalize,
                     handler.Key.GetSynapsePlayer(), 0f, handler.Value)
                 {
@@ -218,9 +218,9 @@ public static class RadioInteractPatch
                 case RadioMessages.RadioCommand.Enable:
                     if (__instance._enabled || __instance._battery <= 0f)
                         return false;
-                    ev.Allow = EventManager.ExecuteEvent(ServerEventType.PlayerRadioToggle, __instance.Owner,
+                    ev.Allow = EventManager.ExecuteEvent(new PlayerRadioToggleEvent( __instance.Owner,
                         __instance,
-                        true);
+                        true));
                     ItemEvents.RadioUse.RaiseSafely(ev);
                     if (!ev.Allow) return false;
 
@@ -230,9 +230,9 @@ public static class RadioInteractPatch
                 case RadioMessages.RadioCommand.Disable:
                     if (!__instance._enabled) return false;
 
-                    ev.Allow = EventManager.ExecuteEvent(ServerEventType.PlayerRadioToggle, __instance.Owner,
+                    ev.Allow = EventManager.ExecuteEvent(new PlayerRadioToggleEvent(__instance.Owner,
                         __instance,
-                        false);
+                        false));
                     ItemEvents.RadioUse.RaiseSafely(ev);
                     if (!ev.Allow) return false;
 
@@ -240,9 +240,9 @@ public static class RadioInteractPatch
                     break;
 
                 case RadioMessages.RadioCommand.ChangeRange:
-                    ev.Allow = EventManager.ExecuteEvent(ServerEventType.PlayerChangeRadioRange, __instance.Owner,
+                    ev.Allow = EventManager.ExecuteEvent(new PlayerChangeRadioRangeEvent(__instance.Owner,
                         __instance,
-                        (byte)ev.NextRange);
+                        ev.NextRange));
                     ItemEvents.RadioUse.RaiseSafely(ev);
                     if (!ev.Allow) return false;
 

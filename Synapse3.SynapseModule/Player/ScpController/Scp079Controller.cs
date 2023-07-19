@@ -124,7 +124,7 @@ public class Scp079Controller : ScpControllerBase<Scp079Role>
     {
         if (!IsInstance) return;
 
-        DoorLockChanger.ServerUnlockAll();
+        DoorLockChanger.ServerUnlock();
     }
 
     public override RoleTypeId ScpRole => RoleTypeId.Scp079;

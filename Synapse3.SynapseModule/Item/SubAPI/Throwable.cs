@@ -47,14 +47,13 @@ public class Throwable : ISubSynapseItem
         if(!InventoryItemLoader.AvailableItems.TryGetValue(_item.ItemType, out var itemBase)) return;
         if(itemBase is not ThrowableItem throwableItem) return;
 
-        Projectile = Object.Instantiate(throwableItem.Projectile);
+        Projectile = Object.Instantiate(throwableItem.Projectile, _item.Pickup.Position, _item.Pickup.Rotation);
         Projectile.transform.localScale = _item.Scale;
-        if (Projectile.TryGetComponent<Rigidbody>(out var rigidbody))
+        if (Projectile.TryGetComponent<Rigidbody>(out var rigidbodyGrenade) &&
+            _item.Pickup.TryGetComponent<Rigidbody>(out var rigidbodyItem))
         {
-            rigidbody.position = _item.Pickup.Rb.position;
-            rigidbody.rotation = _item.Pickup.Rb.rotation;
-            rigidbody.velocity = _item.Pickup.Rb.velocity;
-            rigidbody.angularVelocity = _item.Pickup.Rb.angularVelocity;
+            rigidbodyGrenade.velocity = rigidbodyItem.velocity;
+            rigidbodyGrenade.angularVelocity = rigidbodyItem.angularVelocity;
         }
 
         _item.Pickup.Info.Locked = true;
@@ -62,13 +61,12 @@ public class Throwable : ISubSynapseItem
         if (owner != null)
             Projectile.PreviousOwner = owner;
         NetworkServer.Spawn(Projectile.gameObject);
-        Projectile.InfoReceived(default, _item.Pickup.Info);
+        Projectile.InfoReceivedHook(default, _item.Pickup.Info);
 
         var comp = Projectile.gameObject.AddComponent<SynapseObjectScript>();
         comp.Object = _item;
         
         Projectile.ServerActivate();
-        Projectile.syncVarDirtyBits = ~(0uL);
 
         _item.DestroyItem();
         _item.DestroyPickup();
@@ -101,13 +99,11 @@ public class Throwable : ISubSynapseItem
             ItemId = _item.ItemType,
             Locked = !throwableItem._repickupable,
             Serial = _item.Serial,
-            Weight = _item.Weight,
+            WeightKg = _item.Weight,
         };
-        info.ServerSetPositionAndRotation(transform.position, transform.rotation);
-        Projectile.NetworkInfo = info;
+        Projectile.NetworkInfo = info;//Can break here
         Projectile.PreviousOwner = _item.ItemOwner;
         NetworkServer.Spawn(Projectile.gameObject);
-        Projectile.InfoReceived(default, info);
         
         var comp = Projectile.gameObject.AddComponent<SynapseObjectScript>();
         comp.Object = _item;

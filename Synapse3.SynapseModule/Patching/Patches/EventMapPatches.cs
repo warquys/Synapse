@@ -92,7 +92,7 @@ public static class TeslaPatch
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(TeslaGate), nameof(TeslaGate.PlayerInIdleRange))]
+    [HarmonyPatch(typeof(TeslaGate), nameof(TeslaGate.IsInIdleRange), typeof(ReferenceHub))]
     public static bool PlayerInIdleRange(TeslaGate __instance, ReferenceHub player, out bool __result)
     {
         __result = false;
@@ -100,17 +100,17 @@ public static class TeslaPatch
         {
             var sPlayer = player.GetSynapsePlayer();
             var tesla = __instance.GetSynapseTesla();
-            if (sPlayer == null || tesla == null || !sPlayer.IsAlive) return false;
+            if (sPlayer == null || tesla == null) return false;
+            if (!sPlayer.IsAlive) return false;
             var pos = __instance.transform.position;
             switch (sPlayer.CurrentRole)
             {
                 case IFpcRole fpcRole
                     when Vector3.Distance(pos, fpcRole.FpcModule.Position) < __instance.distanceToIdle:
-                case Scp079Role scp079Role when RoomIdUtils.IsTheSameRoom(scp079Role.CurrentCamera.Position, pos):
+                case ITeslaControllerRole teslaControllerRole
+                    when teslaControllerRole.IsInIdleRange(tesla.Gate):
                     var ev = new TriggerTeslaEvent(sPlayer,
-                        sPlayer.Invisible < InvisibleMode.Ghost &&
-                        (sPlayer.CurrentRole is not ITeslaControllerRole teslaRole ||
-                         teslaRole.CanActivateIdle), tesla, true);
+                        sPlayer.Invisible < InvisibleMode.Ghost, tesla, true);
                     MapEvents.TriggerTesla.RaiseSafely(ev);
                     __result = ev.Allow;
                     break;
@@ -145,8 +145,8 @@ public static class DecoratedMapPatches
             gen._cooldownStopwatch.Stop();
             var player = hub.GetSynapsePlayer();
 
-            var nwAllow = EventManager.ExecuteEvent(ServerEventType.PlayerInteractGenerator, hub, gen,
-                (Scp079Generator.GeneratorColliderId)interaction);
+            var nwAllow = EventManager.ExecuteEvent(new PlayerInteractGeneratorEvent(hub, gen,
+                (Scp079Generator.GeneratorColliderId)interaction));
 
             switch (interaction)
             {
@@ -156,8 +156,7 @@ public static class DecoratedMapPatches
                     {
                         var isOpen = gen.HasFlag(gen._flags, Scp079Generator.GeneratorFlags.Open);
                         var nwAllow2 = EventManager.ExecuteEvent(
-                            isOpen ? ServerEventType.PlayerCloseGenerator : ServerEventType.PlayerOpenGenerator, hub,
-                            gen);
+                            isOpen ? new PlayerCloseGeneratorEvent(hub, gen) : new PlayerOpenGeneratorEvent(hub, gen));
 
                         var ev = new GeneratorInteractEvent(player, nwAllow && nwAllow2, gen.GetSynapseGenerator(),
                             isOpen
@@ -176,7 +175,7 @@ public static class DecoratedMapPatches
                     {
                         var allow = gen._requiredPermission.CheckPermission(player) &&
                                     Synapse3Extensions.CanHarmScp(player, true) &&
-                                    EventManager.ExecuteEvent(ServerEventType.PlayerUnlockGenerator, hub, gen);
+                                    EventManager.ExecuteEvent(new PlayerUnlockGeneratorEvent(hub, gen));
                         var ev = new GeneratorInteractEvent(player, allow, gen.GetSynapseGenerator(),
                             GeneratorInteract.UnlockDoor);
                         Synapse.Get<PlayerEvents>().GeneratorInteract.RaiseSafely(ev);
@@ -202,8 +201,8 @@ public static class DecoratedMapPatches
                     {
                         var nwAllow2 = EventManager.ExecuteEvent(
                             gen.Activating
-                                ? ServerEventType.PlayerDeactivatedGenerator
-                                : ServerEventType.PlayerActivateGenerator, hub, gen);
+                                ? new PlayerDeactivatedGeneratorEvent(hub, gen)
+                                : new PlayerActivateGeneratorEvent(hub, gen));
                         var ev = new GeneratorInteractEvent(player, nwAllow && nwAllow2, gen.GetSynapseGenerator(),
                             gen.Activating ? GeneratorInteract.Cancel : GeneratorInteract.Activate);
                         Synapse.Get<PlayerEvents>().GeneratorInteract.RaiseSafely(ev);
@@ -230,7 +229,7 @@ public static class DecoratedMapPatches
                     if (gen.Activating && !gen.Engaged)
                     {
                         var ev = new GeneratorInteractEvent(player,
-                            nwAllow && EventManager.ExecuteEvent(ServerEventType.PlayerDeactivatedGenerator, hub, gen),
+                            nwAllow && EventManager.ExecuteEvent(new PlayerDeactivatedGeneratorEvent(hub, gen)),
                             gen.GetSynapseGenerator(),
                             GeneratorInteract.Cancel);
                         Synapse.Get<PlayerEvents>().GeneratorInteract.RaiseSafely(ev);
@@ -276,7 +275,7 @@ public static class DecoratedMapPatches
                     MapEvents.GeneratorEngage.RaiseSafely(ev);
 
                     if (!ev.Allow || ev.ForcedUnAllow ||
-                        !EventManager.ExecuteEvent(ServerEventType.GeneratorActivated, generator))
+                        !EventManager.ExecuteEvent(new GeneratorActivatedEvent(generator)))
                         return;
 
                     generator.Engaged = true;
