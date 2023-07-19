@@ -51,7 +51,7 @@ public partial class SynapsePlayer
     public virtual void SendWindowMessage(string text) => GameConsoleTransmission.SendToClient(Connection, "[REPORTING] " + text, "white");
     
     /// <summary>
-    /// Displays a hint on the Player's screen
+    /// Displays a hint on the Player's screen, that override the hint list!
     /// </summary>
     public void SendHint(string message, float duration = 5f)
     {
@@ -289,7 +289,7 @@ public partial class SynapsePlayer
                     ScenarioId = (byte)Escape.EscapeScenarioType.ClassD,
                     EscapeTime = (ushort)Mathf.CeilToInt(CurrentRole.ActiveTime)
                 });
-                if (ev.OverrideRole is >= 0 and <= RoleService.HighestRole)
+                if (_role.IsIdVanila(ev.OverrideRole))
                     RoleManager.ServerSetRole((RoleTypeId)ev.OverrideRole, RoleChangeReason.Escaped);
                 else RoleID = ev.OverrideRole;
                 return;

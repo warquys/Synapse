@@ -7,6 +7,8 @@ using InventorySystem.Items.Pickups;
 using MapGeneration;
 using MapGeneration.Distributors;
 using Neuron.Core.Meta;
+using PluginAPI.Core;
+using PluginAPI.Core.Items;
 using PlayerRoles;
 using PlayerRoles.FirstPersonControl;
 using PlayerRoles.PlayableScps.Scp079;
@@ -347,8 +349,17 @@ public static class DecoratedMapPatches
                 {
                     if (player.Inventory.ItemInHand != SynapseItem.None)
                     {
-                        player.Inventory.ItemInHand.UpgradeProcessor.CreateUpgradedItem(player.Inventory.ItemInHand,
-                            setting);
+                        var destroy = true;
+                        foreach (var processor in player.Inventory.ItemInHand.UpgradeProcessors)
+                        {
+                            if (processor.CreateUpgradedItem(player.Inventory.ItemInHand, setting))
+                            {
+                                destroy = false;
+                                break;
+                            }
+                        }
+                        if (destroy)
+                            player.Inventory.ItemInHand.Destroy();
                     }
                 }
                 else if (inventory)
@@ -356,7 +367,17 @@ public static class DecoratedMapPatches
                     foreach (var item in player.Inventory.Items)
                     {
                         Scp914Upgrader.OnPickupUpgraded?.Invoke(item.Pickup, setting);
-                        item.UpgradeProcessor.CreateUpgradedItem(item, setting);
+                        var destroy = true;
+                        foreach (var processor in item.UpgradeProcessors)
+                        {
+                            if (processor.CreateUpgradedItem(item, setting))
+                            {
+                                destroy = false;
+                                break;
+                            }
+                        }
+                        if (destroy)
+                            player.Inventory.ItemInHand.Destroy();
                     }
                 }
 
@@ -366,8 +387,18 @@ public static class DecoratedMapPatches
 
             foreach (var item in ev.Items)
             {
-                item?.UpgradeProcessor.CreateUpgradedItem(item, setting,
-                    ev.MoveItems ? item.Position + ev.MoveVector : item.Position);
+                var destroy = true;
+                foreach (var processor in item.UpgradeProcessors)
+                {
+                    if (processor.CreateUpgradedItem(item, setting, 
+                        ev.MoveItems ? item.Position + ev.MoveVector : item.Position))
+                    {
+                        destroy = false;
+                        break;
+                    }
+                }
+                if (destroy)
+                    item.Destroy();
             }
 
             return false;

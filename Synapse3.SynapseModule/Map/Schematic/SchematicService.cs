@@ -7,6 +7,7 @@ using AdminToys;
 using Interactables.Interobjects;
 using InventorySystem.Items.Firearms.Attachments;
 using MapGeneration.Distributors;
+using MEC;
 using Microsoft.Extensions.Logging;
 using Mirror;
 using Neuron.Core;
@@ -102,8 +103,8 @@ public class SchematicService : Service
 
     public void RegisterSchematic(SchematicConfiguration configuration)
     {
-        if(IsIDRegistered(configuration.Id)) return;
-        
+        if (IsIDRegistered(configuration.Id)) return;
+
         _schematicConfigurations.Add(configuration);
     }
 
@@ -252,7 +253,7 @@ public class SchematicService : Service
                     SynapseWorkStation.Prefab = station;
                     break;
             }
-            
+
             if (!_ragDollNames.ContainsKey(prefab.Value.name)) continue;
             var role = _ragDollNames[prefab.Value.name];
             var prefabRagDoll = prefab.Value.GetComponent<BasicRagdoll>();
