@@ -47,6 +47,21 @@ public static class RoundCheckEndPatch
 }
 
 [Automatic]
+[SynapsePatch("RoundForceEndPatch", PatchType.RoundEvent)]
+public static class RoundForceEndPatch
+{
+    private static readonly RoundService _round;
+    static RoundForceEndPatch() => _round = Synapse.Get<RoundService>();
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(RoundRestart), nameof(RoundRestart.InitiateRoundRestart))]
+    public static void RoundSummaryOverride()
+    {
+        _round.RoundRestarting = true;
+    }
+}
+
+[Automatic]
 [SynapsePatch("FirstSpawn", PatchType.RoundEvent)]
 public static class FirstSpawnPatch
 {
@@ -245,9 +260,12 @@ public static class DecoratedRoundMethods
         while (summary != null)
         {
             yield return Timing.WaitForSeconds(2.5f);
-            if (RoundSummary.RoundLock) continue;
-            if (summary.KeepRoundOnOne && PlayerService.Players.Count == 1) continue;
-            if (!RoundSummary.RoundInProgress() || Time.unscaledTime - time < 15f) continue;
+            if (!RoundService.ForceEnd)
+            {
+                if (RoundSummary.RoundLock) continue;
+                if (summary.KeepRoundOnOne && PlayerService.Players.Count == 1) continue;
+                if (!RoundSummary.RoundInProgress() || Time.unscaledTime - time < 15f) continue;
+            }
 
             var customRoles = new List<ISynapseRole>();
             var livingTeams = new List<uint>();
@@ -380,7 +398,7 @@ public static class DecoratedRoundMethods
             RoundEvents.CheckEnd.RaiseSafely(ev);
             summary._roundEnded = ev.EndRound;
 
-            if (!RoundService.ForceEnd && !summary._roundEnded) continue;
+            if (!summary._roundEnded && !RoundService.ForceEnd) continue;
 
             RoundEvents.End.RaiseSafely(new Events.RoundEndEvent(leadingTeam));
 

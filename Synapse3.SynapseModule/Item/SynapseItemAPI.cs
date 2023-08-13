@@ -17,9 +17,15 @@ namespace Synapse3.SynapseModule.Item;
 
 public partial class SynapseItem
 {
-    public void Upgrade(Scp914KnobSetting settings, Vector3 position = default) =>
-        UpgradeProcessor.CreateUpgradedItem(this, settings, position);
-    
+    public void Upgrade(Scp914KnobSetting settings, Vector3 position = default)
+    {
+        foreach (var processor in UpgradeProcessors)
+        {
+            if (processor.CreateUpgradedItem(this, settings, position))
+                return;
+        }
+    }
+
     public void EquipItem(SynapsePlayer player, bool dropWhenFull = true, bool provideFully = false)
     {
         if (player == null || player.Hub == null) return;
@@ -130,6 +136,54 @@ public partial class SynapseItem
         comp.Object = this;
     }
 
+    public void SpawnServerOnly()
+        => SpawnServerOnly(Position);
+
+    public void SpawnServerOnly(Vector3 position)
+    {
+        if (State == ItemState.Map)
+        {
+            Position = position;
+            return;
+        }
+
+        var owner = ItemOwner;
+        var rot = _rotation;
+
+        DestroyPickup();
+        Throwable.DestroyProjectile();
+
+        if (!InventoryItemLoader.AvailableItems.TryGetValue(ItemType, out var exampleBase)) return;
+
+        if (owner != null)
+        {
+            rot = owner.CameraReference.rotation * exampleBase.PickupDropModel.transform.rotation;
+        }
+
+        Pickup = Object.Instantiate(exampleBase.PickupDropModel, position, rot);
+        var info = new PickupSyncInfo
+        {
+            ItemId = ItemType,
+            Serial = Serial,
+            WeightKg = Weight,
+            Locked = !CanBePickedUp,
+        };
+        Pickup.Position = position;
+        Pickup.Rotation = rot;
+        Pickup.Info = info;
+        Pickup.NetworkInfo = info;
+        Pickup.transform.localScale = Scale;
+        Pickup.InfoReceivedHook(default, info);
+        SetState(ItemState.ServerSideOnly);
+        CreateSchematic(false);
+
+        DestroyItem();
+
+        var comp = Pickup.gameObject.AddComponent<SynapseObjectScript>();
+        comp.Object = this;
+    }
+
+
     public override void Destroy()
     {
         DestroyItem();
@@ -177,7 +231,7 @@ public partial class SynapseItem
         Pickup = null;
     }
 
-    private void CreateSchematic()
+    private void CreateSchematic(bool unspawnPickup = true)
     {
         try
         {
@@ -190,7 +244,8 @@ public partial class SynapseItem
             Schematic.Parent = this;
             Schematic.GameObject.transform.parent = Pickup.transform;
 
-            Pickup.netIdentity.UnSpawnForAllPlayers();
+            if (unspawnPickup)
+                Pickup.netIdentity.UnSpawnForAllPlayers();
         }
         catch (Exception ex)
         {

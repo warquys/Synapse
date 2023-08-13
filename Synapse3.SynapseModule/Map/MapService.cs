@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Hazards;
 using Interactables.Interobjects.DoorUtils;
@@ -10,18 +9,16 @@ using MEC;
 using Mirror;
 using Neuron.Core.Meta;
 using PlayerRoles.Ragdolls;
-using PluginAPI.Core;
 using RelativePositioning;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Item;
 using Synapse3.SynapseModule.Map.Objects;
-using Synapse3.SynapseModule.Map.Rooms;
 using Synapse3.SynapseModule.Map.Schematic;
 using Synapse3.SynapseModule.Player;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Utils.NonAllocLINQ;
-using static UnityEngine.PlayerLoop.PreLateUpdate;
 using Object = UnityEngine.Object;
 
 namespace Synapse3.SynapseModule.Map;
@@ -158,9 +155,10 @@ public class MapService : Service
     {
         if (_doorByName.ContainsKey(doorName))
             return _doorByName[doorName];
-        
-        var newKey = doorName.Split('(')[0];
-        return _doorByName.ContainsKey(newKey) ? _doorByName[newKey] : DoorType.Other;
+
+        var name = doorName.Split('(')[0];
+
+        return _doorByName.ContainsKey(name) ? _doorByName[name] : DoorType.Other;
     }
 
 
@@ -176,22 +174,23 @@ public class MapService : Service
         { "LCZ PortallessBreakableDoor ", DoorType.Airlock },
         { "Prison BreakableDoor", DoorType.PrisonDoor },
         { "Prison BreakableDoor ", DoorType.PrisonDoor },
-        
+
         { "LCZ_CAFE", DoorType.Pc },
         { "LCZ_WC", DoorType.Wc },
         { "LCZ_ARMORY", DoorType.LczArmory },
-        
+
         { "GR18", DoorType.Gr18 },
         { "GR18_INNER", DoorType.Gr18Inner },
-        
+
         { "330", DoorType.Scp330 },
         { "330_CHAMBER", DoorType.Scp330Chamber },
-        
+
         { "173_BOTTOM", DoorType.Scp173Bottom },
         { "173_ARMORY", DoorType.Scp173Armory },
         { "173_CONNECTOR", DoorType.Scp173Connector },
         { "173_GATE", DoorType.Scp173Gate },
-        
+        { "Unsecured Pryable GateDoor (1)", DoorType.Scp173NewGate },
+
         { "914", DoorType.Scp914 },
         { "914 Door", DoorType.Scp914Door },
         { "914 Door ", DoorType.Scp914Door },

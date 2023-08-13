@@ -1,6 +1,6 @@
 ﻿namespace Synapse3.SynapseModule.Enums;
 
-public enum DamageType//TODO maby Change the DamageType of synapse to the one of NW
+public enum DamageType//TODO maby (if they start to use it) Change the DamageType of synapse to the one of NW
 {
     Recontained,
     Warhead,

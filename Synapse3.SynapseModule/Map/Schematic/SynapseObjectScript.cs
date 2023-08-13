@@ -74,7 +74,8 @@ public class SynapseObjectScript : MonoBehaviour
 
     private void MoveElevator(ElevatorMoveContentEvent ev)
     {
-        if (Object?.GameObject == null) return;
+        var gameObject = Object?.GameObject;
+        if (gameObject == null) return;
 
         if (ev.CustomElevator)
         {
@@ -95,18 +96,18 @@ public class SynapseObjectScript : MonoBehaviour
             _elevator = null;
             Object.Position -= ev.DeltaPosition;
 
-            Object.GameObject.transform.SetParent(_previousParent);
+            gameObject.transform.SetParent(_previousParent);
             if (Object is IRefreshable refreshable)
                 refreshable.Update = _refresh;
         }
         else
         {
             if (isAlreadyMoving) return;
-            _previousParent = Object.GameObject.transform;
+            _previousParent = gameObject.transform;
             Object.Position += ev.DeltaPosition;
             _inElevator = true;
             _elevator = ev.Elevator;
-            Object.GameObject.transform.SetParent(ev.Elevator.Chamber.ParentTransform);
+            gameObject.transform.SetParent(ev.Elevator.Chamber.ParentTransform);
             if (Object is IRefreshable refreshable)
             {
                 _refresh = refreshable.Update;

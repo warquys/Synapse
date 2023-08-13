@@ -34,6 +34,17 @@ public partial class SynapsePlayer
         set => value.Apply(this, true);
     }
 
+    public void CallKeyBind(KeyCode key)
+    {
+        if (!Binds.TryGetValue(key, out var commands))
+            return;
+
+        foreach (var command in commands)
+        {
+            command.Execute(this);
+        }
+    }
+
     public void SendNetworkMessage<TNetworkMessage>(TNetworkMessage msg, int channel = 0)
         where TNetworkMessage : struct, NetworkMessage =>
         Connection?.Send(msg, channel);

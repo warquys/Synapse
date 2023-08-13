@@ -1,32 +1,17 @@
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using MEC;
 using Mirror;
 using Neuron.Core;
 using Neuron.Core.Events;
-using Neuron.Core.Logging;
-using Neuron.Core.Events;
 using Neuron.Core.Meta;
-using PlayerStatsSystem;
 using PlayerRoles;
 using Scp914;
-using Synapse3.SynapseModule.Command;
-using Synapse3.SynapseModule.Dummy;
-using Synapse3.SynapseModule.Events;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using MEC;
-using Mirror;
-using Neuron.Core;
-using Neuron.Core.Events;
-using Neuron.Core.Meta;
-using PlayerRoles;
 using Synapse3.SynapseModule.Config;
 using Synapse3.SynapseModule.Dummy;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
+using Synapse3.SynapseModule.Item;
 using Synapse3.SynapseModule.Map.Objects;
 using Synapse3.SynapseModule.Map.Rooms;
 using Synapse3.SynapseModule.Map.Schematic;
@@ -102,6 +87,7 @@ public class DebugService : Service
             if (reactor.Key == typeof(SpeakToPlayerEvent)) continue;
             if (reactor.Key == typeof(RoundCheckEndEvent)) continue;
             if (reactor.Key == typeof(SendPlayerDataEvent)) continue;
+            if (reactor.Key == typeof(HealEvent)) continue;
             if (reactor.Key.IsAbstract) continue;
             reactor.Value.SubscribeUnsafe(this, method);
         }
@@ -110,8 +96,8 @@ public class DebugService : Service
         
         _item.ConsumeItem.Subscribe(ev =>
         {
-            if (ev.State == ItemInteractState.Finalize)
-                ev.Allow = false;
+            //if (ev.State == ItemInteractState.Finalize)
+            //    ev.Allow = false;
         });
         _player.Escape.Subscribe(ev =>
         {
@@ -159,8 +145,15 @@ public class DebugService : Service
         switch (ev.KeyCode)
         {
             case KeyCode.Alpha1:
-                ev.Player.Room.RoomColor = Color.red;
-                Timing.CallDelayed(2, () => ev.Player.Room.RoomColor = default);
+                break;
+
+            case KeyCode.Alpha2:
+                break;
+
+            case KeyCode.Alpha3:
+                break;
+
+            case KeyCode.Alpha4:
                 break;
         }
     }

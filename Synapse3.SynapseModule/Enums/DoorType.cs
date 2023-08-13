@@ -15,6 +15,7 @@ public enum DoorType
     Scp173Connector,
     Scp173Gate,
     Scp173Bottom,
+    Scp173NewGate,
     Scp914,
     Scp914Door,
     Checkpoint,

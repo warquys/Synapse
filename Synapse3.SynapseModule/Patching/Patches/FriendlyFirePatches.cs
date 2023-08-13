@@ -4,6 +4,7 @@ using InventorySystem.Items.ThrowableProjectiles;
 using Neuron.Core.Meta;
 using PlayerStatsSystem;
 using UnityEngine;
+using Utils;
 
 namespace Synapse3.SynapseModule.Patching.Patches;
 
@@ -60,7 +61,8 @@ public static class FlashBangCheckPatch
             if (playersHit > 0)
                 Hitmarker.SendHitmarker(__instance.PreviousOwner.Hub, playersHit);
 
-            ((EffectGrenade)__instance).ServerFuseEnd();
+            ExplosionUtils.ServerSpawnEffect(__instance.transform.position, __instance.Info.ItemId);
+            __instance.DestroySelf();
 
             return false;
         }

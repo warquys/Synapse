@@ -20,13 +20,14 @@ public partial class SynapseItem : DefaultSynapseObject, IHideable
     public static SynapseItem None { get; } = new(uint.MaxValue);
 
     private readonly ItemService _item;
-    
+
     /// <summary>
     /// Private constructor that will be called by all other constructors
     /// </summary>
     private SynapseItem()
     {
         _item = Synapse.Get<ItemService>();
+
         Throwable = new Throwable(this);
         FireArm = new FireArm(this);
 

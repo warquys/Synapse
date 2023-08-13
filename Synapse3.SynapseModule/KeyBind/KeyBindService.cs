@@ -117,76 +117,33 @@ public class KeyBindService : Service
         CheckKey(ev.Player);
     }
 
-    //TODO: Improve this code when I have more time to do so
     private void KeyPress(KeyPressEvent ev)
     {
         if (NewBinding.ContainsKey(ev.Player))
-        {
-            var newBind = NewBinding[ev.Player];
-            
-            foreach (var bindPair in ev.Player.Binds)
-            {
-                foreach (var bind in bindPair.Value.ToList())
-                {
-                    if (bind == newBind)
-                        ev.Player._binds[bindPair.Key].Remove(bind);
-                }
-            }
+            UpdateKey(ev.Player, ev.KeyCode);
+        else
+            ev.Player.CallKeyBind(ev.KeyCode);
+    }
 
-            if (!ev.Player._binds.TryGetValue(ev.KeyCode, out var binds))
-                ev.Player._binds[ev.KeyCode] = binds = new List<IKeyBind>();
+    private void UpdateKey(SynapsePlayer player, KeyCode key)
+    {
+        var newBind = NewBinding[player];
+        var binds = player._binds;
+        binds.Values.Any(p => p.Remove(newBind));
 
-            binds.Add(newBind);
-            ev.Player.SendConsoleMessage(
-                _config.Translation.Get(ev.Player).KeyBindSet
-                    .Format(newBind.Attribute.CommandName, ev.KeyCode), "green");
-            NewBinding.Remove(ev.Player);
-            
-            //Store the info inside the Database
-            if(ev.Player.DoNotTrack) return;
-            if (!TryParseData(ev.Player.GetData(DataBaseKey), out var storedBinds))
-                storedBinds = new Dictionary<KeyCode, List<IKeyBind>>();
+        if (!binds.TryGetValue(key, out var bindsForKey))
+            binds[key] = bindsForKey = new List<IKeyBind>();
 
-            foreach (var bindPair in storedBinds)
-            {
-                foreach (var bind in bindPair.Value.ToList())
-                {
-                    if (bind == newBind)
-                        storedBinds[bindPair.Key].Remove(bind);
-                }   
-            }
+        bindsForKey.Add(newBind);
+        player.SendConsoleMessage(
+            _config.Translation.Get(player).KeyBindSet
+                .Format(newBind.Attribute.CommandName, player), "green");
+        NewBinding.Remove(player);
 
-            if (!storedBinds.ContainsKey(ev.KeyCode))
-                storedBinds[ev.KeyCode] = new List<IKeyBind>();
-            
-            storedBinds[ev.KeyCode].Add(newBind);
-                    
-                    
-            var data = "";
-            foreach (var keyBinds in storedBinds)
-            {
-                if (keyBinds.Value.Count == 0) continue;
-                data += keyBinds.Key + ";";
-                for (int i = 0; i < keyBinds.Value.Count; i++)
-                {
-                    var bind = keyBinds.Value[i];
-                    if (i > 0)
-                        data += "-";
-                    data += bind.Attribute.CommandName;
-                }
-                data += "/";
-            }
-            ev.Player.SetData(DataBaseKey, data);
-            return;
-        }
-        
-        if (!ev.Player.Binds.TryGetValue(ev.KeyCode, out var commands))
-            return;
+        //Store the info inside the Database
+        if (player.DoNotTrack) return;
 
-        foreach (var command in commands)
-        {
-            command.Execute(ev.Player);
-        }
+        player.SetData(DataBaseKey, SerializeBinds(binds));
     }
 
     private bool TryParseData(string data, out Dictionary<KeyCode, List<IKeyBind>> commandKey)
@@ -241,6 +198,26 @@ public class KeyBindService : Service
 
         return commandKey;
     }
+
+    private string SerializeBinds(Dictionary<KeyCode, List<IKeyBind>> binds)
+    {
+        var data = "";
+        foreach (var keyBinds in binds)
+        {
+            if (keyBinds.Value.Count == 0) continue;
+            data += keyBinds.Key + ";";
+            for (int i = 0; i < keyBinds.Value.Count; i++)
+            {
+                var bind = keyBinds.Value[i];
+                if (i > 0)
+                    data += "-";
+                data += bind.Attribute.CommandName;
+            }
+            data += "/";
+        }
+        return data;
+    }
+
 
     private void CheckForPlayers()
     {

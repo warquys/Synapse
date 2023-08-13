@@ -197,7 +197,7 @@ public static class Synapse3Extensions
         var id = ((UniversalDamageHandler)handler).TranslationId;
 
         if (id > 23) return DamageType.Universal;
-
+        PluginAPI.Core.Player
         return (DamageType)id;
     }
 

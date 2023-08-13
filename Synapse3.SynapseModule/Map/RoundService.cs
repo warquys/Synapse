@@ -34,6 +34,7 @@ public class RoundService : Service
     {
         CurrentRound++;
         ForceEnd = false;
+        RoundRestarting = false;
     }
 
 
@@ -150,15 +151,21 @@ public class RoundService : Service
     public TimeSpan RoundLength => RoundStart.RoundLength;
 
     /// <summary>
-    /// True during active round
+    /// True during active round (after the "wait of player")
     /// </summary>
     public bool RoundIsActive => RoundSummary.RoundInProgress();
 
     /// <summary>
-    /// True when the round has ended
+    /// True when the round has ended (dimscreen displayed)
     /// </summary>
     public bool RoundEnded => Rs._roundEnded;
-    
+
+    /// <summary>
+    /// True when the round restart (all players disconnected before the "wait of player")
+    /// </summary>
+    public bool RoundRestarting { get; internal set; }
+
+
     internal bool ForceEnd { get; set; }
 
     /// <summary>

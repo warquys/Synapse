@@ -1,6 +1,11 @@
 [![discord badge](https://img.shields.io/discord/716698782317805629?color=7289DA&label=discord)](https://discord.gg/uVtNr9Czng) [![Docs](https://img.shields.io/badge/-Documentary-blue)](https://docs3.synapsesl.xyz/)
 
-# **Synapse**
+The documentation is not finished and will probably not be finished on this domain name but on the Github directly or not finish at all, when the discord is the old Synapse discord. You can always go above to contact me @warkis if you have any quick questions, for sugestion or issue create one on github.
+
+| :exclamation: DO NOT Disturbed by old Synapse developers, they  no longer works on Synapse.  |
+|----------------------------------------------------------------------------------------------|
+
+# **Synapse-Continued**
 ## What is Synapse?
 Synapse is an SCP:SL Plugin Framework and High-Level Modding API.
 
@@ -28,4 +33,4 @@ We already established that there are a lot of features for developers, but what
 It depends on your machine running SCP: Sl but it's quite simple just follow the installation guide [here](https://docs3.synapsesl.xyz/hosting-guides/how-to-set-up-a-server)
 
 ## Developing a Plugin for Synapse
-When you want to start coding Plugins for Synapse3 is it recommended to look at our beginner docs [here](https://docs3.synapsesl.xyz/getting-started/first-plugin) as well as joining our [Discord](https://discord.gg/uVtNr9Czng) for further questions you may have
+When you want to start coding Plugins for Synapse3 is it recommended to look at our beginner docs [here](https://docs3.synapsesl.xyz/getting-started/first-plugin) as well as joining our [Discord](https://discord.gg/uVtNr9Czng) for further questions you may have contact Warkis (Metastasis).

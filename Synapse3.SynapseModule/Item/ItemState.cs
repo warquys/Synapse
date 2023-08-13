@@ -7,4 +7,5 @@ public enum ItemState
     Inventory,
     Thrown,
     Despawned,
+    ServerSideOnly,
 }

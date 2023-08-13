@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
-using Neuron.Core.Logging;
 using Neuron.Core.Meta;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Map.Schematic;
@@ -54,13 +54,18 @@ public class ItemService : Service
     {
         if (serial == 0)
         {
-            NeuronLogger.For<Synapse>().Debug("Item with Serial 0 was requested");
+            SynapseLogger<Synapse>.Debug("Item with Serial 0 was requested");
             return SynapseItem.None;
         }
 
         if (_allItems.ContainsKey(serial)) return _allItems[serial];
-        
-        NeuronLogger.For<Synapse>().Warn("If this message appears exists a Item that is not registered. Please report this bug in our Discord as detailed as possible Serial:" + serial);
+
+#if DEBUG
+        var trace = new StackTrace(true);
+        SynapseLogger<Synapse>.Warn("Item not registered. " + serial + "\nStackTrace:\n" + trace.ToString());
+#else
+        SynapseLogger<Synapse>.Warn("If this message appears exists a Item that is not registered. Please report this bug in our Discord as detailed as possible Serial:" + serial);
+#endif
         return SynapseItem.None;
     }
 

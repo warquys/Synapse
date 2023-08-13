@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using CustomPlayerEffects;
 using HarmonyLib;
 using InventorySystem.Items.MicroHID;
@@ -7,6 +9,7 @@ using InventorySystem.Items.Usables;
 using InventorySystem.Items.Usables.Scp330;
 using Mirror;
 using Neuron.Core.Meta;
+using PluginAPI.Core;
 using PluginAPI.Enums;
 using PluginAPI.Events;
 using Synapse3.SynapseModule.Enums;
@@ -14,6 +17,7 @@ using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Item;
 using UnityEngine;
 using Utils.Networking;
+using static System.Net.Mime.MediaTypeNames;
 using StatusMessage = InventorySystem.Items.Usables.StatusMessage;
 
 namespace Synapse3.SynapseModule.Patching.Patches;
@@ -43,8 +47,8 @@ public static class ConsumeItemPatch
                     if (handler.CurrentUsable.ItemSerial != 0) return false;
                     if (!usableItem.CanStartUsing) return false;
 
-                    var ev = new ConsumeItemEvent(player.Inventory.ItemInHand, ItemInteractState.Start, player,
-                        UsableItemsController.GetCooldown(msg.ItemSerial, usableItem, handler), handler);
+                    var cooldown = Math.Max(0, UsableItemsController.GetCooldown(msg.ItemSerial, usableItem, handler));
+                    var ev = new ConsumeItemEvent(player.Inventory.ItemInHand, ItemInteractState.Start, player, cooldown, handler);
                     ev.Allow = ev.RemainingCoolDown <= 0 &&
                                EventManager.ExecuteEvent(new PlayerUseItemEvent(player.Hub, usableItem));
                     ItemEvents.ConsumeItem.RaiseSafely(ev);
@@ -132,6 +136,8 @@ public static class ConsumeItemPatch
         }
     }
 
+    public static bool allowNextEffects = false;
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(UsableItemsController), nameof(UsableItemsController.Update))]
     public static bool Update()
@@ -161,11 +167,15 @@ public static class ConsumeItemPatch
                 if (Time.timeSinceLevelLoad < usable.StartTime + usable.Item.UseTime / speed) continue;
 
                 var allow = EventManager.ExecuteEvent(new PlayerUsedItemEvent(handler.Key, usable.Item));
-                var ev = new ConsumeItemEvent(usable.Item.GetItem(), ItemInteractState.Finalize,
-                    handler.Key.GetSynapsePlayer(), 0f, handler.Value)
+                var item = usable.Item.GetItem();
+                var player = handler.Key.GetSynapsePlayer();
+                var ev = new ConsumeItemEvent(item, ItemInteractState.Finalize, player, 0f, handler.Value)
                 {
-                    Allow = allow
+                    Allow = allow,
                 };
+                if (usable.Item is Scp330Bag bag)
+                    ev.CandyID = bag.SelectedCandyId;
+                
                 ItemEvents.ConsumeItem.RaiseSafely(ev);
 
                 if (!ev.Allow)
@@ -174,10 +184,14 @@ public static class ConsumeItemPatch
                     handler.Value.CurrentUsable = CurrentlyUsedItem.None;
                     new StatusMessage(StatusMessage.StatusType.Cancel, handler.Value.CurrentUsable.ItemSerial)
                         .SendToAuthenticated();
-                    ev.Player.Inventory.ItemInHand = SynapseItem.None;
+                    player.Inventory.ItemInHand = SynapseItem.None;
+
                     continue;
                 }
+
+                allowNextEffects = true;
                 usable.Item.ServerOnUsingCompleted();
+                allowNextEffects = false; 
                 Synapse3Extensions.RaiseEvent(typeof(UsableItemsController),
                     nameof(UsableItemsController.ServerOnUsingCompleted), handler.Key, usable.Item);
                 handler.Value.CurrentUsable = CurrentlyUsedItem.None;
@@ -189,6 +203,15 @@ public static class ConsumeItemPatch
         }
 
         return false;
+    }
+
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Consumable), nameof(Consumable.ActivateEffects))]
+    public static bool ActivateEffects()
+    {
+        if (!allowNextEffects) return false;
+        return true;
     }
 }
 

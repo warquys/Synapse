@@ -15,6 +15,7 @@ using Synapse3.SynapseModule.Item;
 using UnityEngine;
 using Utils;
 using static PlayerList;
+using Synapse3.SynapseModule.Map;
 
 namespace Synapse3.SynapseModule.Patching.Patches;
 
@@ -35,15 +36,27 @@ public static class ItemSerialGeneratorPatch
 [SynapsePatch("DestroyPickup", PatchType.SynapseItem)]
 public static class DestroyPickupPatch
 {
+    private static readonly RoundService roundService;
+
+    static DestroyPickupPatch()
+    {
+        roundService = Synapse.Get<RoundService>();
+    }
+
+
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ItemPickupBase), nameof(ItemPickupBase.DestroySelf))]
     public static bool DestroyPickup(ItemPickupBase __instance)
     {
         try
         {
+            if (roundService.RoundRestarting) return true;
+
             if (__instance.Info.Serial == 0) return true;
 
             var item = __instance.GetItem();
+
             if (item == null) return true;
 
             //Whenever the Item should be transformed to a Inventory Item a ItemBase will be created before
@@ -114,7 +127,7 @@ public static class ServerCreatePickupPatch
     {
         try
         {
-            if (item is null) return false;
+            if (item == null) return false;
 
             if (!ItemService._allItems.TryGetValue(psi.Serial, out var synapseItem))
             {
@@ -132,6 +145,16 @@ public static class ServerCreatePickupPatch
             {
                 synapseItem.Drop(position);
                 synapseItem.Rotation = rotation;
+            }
+            else
+            {
+                synapseItem.SpawnServerOnly(position);
+                synapseItem.Rotation = rotation;
+            }
+
+            if (setupMethod != null)
+            {
+                setupMethod(synapseItem.Pickup);
             }
 
             __result = synapseItem.Pickup;

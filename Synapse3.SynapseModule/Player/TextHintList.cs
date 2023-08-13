@@ -1,14 +1,12 @@
-﻿using Hints;
-using MEC;
-using Neuron.Core.Logging;
-using Synapse3.SynapseModule.Enums;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Hints;
+using MEC;
+using Synapse3.SynapseModule.Enums;
 
 namespace Synapse3.SynapseModule.Player;
 
@@ -19,19 +17,21 @@ public class TextHintList
     : ICollection<SynapseTextHint>
 {
     #region Properties & Variables
-    static Dictionary<int, int> SizeMaxSide = new Dictionary<int, int>()
+    internal static Dictionary<int, int> SizeMaxSide = new Dictionary<int, int>()
     {
         { 1, 40 },//Total per ligne is 81 
         { 2, 21 },//Total per ligne is 43
         { 3, 15 },//Total per ligne is 31
     };
 
-    static Dictionary<int, float> SizeMspace = new Dictionary<int, float>()
+    internal static Dictionary<int, float> SizeMspace = new Dictionary<int, float>()
     {
         { 1, 0.85f },
         { 2, 1.60f },
         { 3, 2.20f }
     };
+
+    internal const string BaliseMatchRegex = "<.*?>";
 
     public const int MaxLigne = 54;
     public const int GosthLigne = 15;
@@ -60,23 +60,23 @@ public class TextHintList
         Timing.KillCoroutines(updateCallBack);
         RemoveExpierd();
 
-        var count = _textHints.Count;
-        if (count == 0) return;
+        var hintsCount = _textHints.Count;
+        if (hintsCount == 0) return;
         
-        var ligne = new Line[MaxLigne];
+        var lignes = new Line[MaxLigne];
         for (int i = 0; i < MaxLigne; i++)
-            ligne[i] = new Line();
+            lignes[i] = new Line();
 
-        foreach (var hint in _textHints.OrderBy(p => p.Priority))
-            ProcessHint(ligne, hint);
+        foreach (var textHint in _textHints.OrderBy(p => p.Priority))
+            ProcessHint(lignes, textHint);
 
         var displayTime = _textHints.OrderBy(p => p.DisplayTimeLeft).First(p => p.Displaying).DisplayTimeLeft + 0.01f;
-        var playerHint = new Hints.TextHint(GetMessage(ligne), new HintParameter[]
+        var playerHint = new TextHint(GetMessage(lignes), new HintParameter[]
         {
             new StringHintParameter("")
         }, null, displayTime);
 
-        if (count == 1)
+        if (hintsCount == 1)
         { 
             playerHint._effects = HintEffectPresets.FadeInAndOut(displayTime);
         }
@@ -87,9 +87,7 @@ public class TextHintList
 
     private void RemoveExpierd()
     {
-        var length = _textHints.Count;
-
-        for (int i = length - 1; i >= 0; i--)
+        for (int i = _textHints.Count - 1; i >= 0; i--)
         {
             var hint = _textHints[i];
             if (!hint.Expired) continue;
@@ -113,7 +111,6 @@ public class TextHintList
                 break;
             case HintSide.Midle:
                 ProcesseMidle(lignes, hint);
-                //TODO:
                 break;
         }
     }
@@ -126,8 +123,10 @@ public class TextHintList
         var ligneCount = textToInsert.Count;
         var ligne = hint.Ligne;
         var size = hint.Size;
+
         if (ligneCount * hint.Size >= MaxLigne) return;
         if (ligne - hint.Size + 1 < 0) return;
+
         for (int i = 0; i < ligneCount; i++)
         {
             var dest = ligne + i * size;
@@ -144,7 +143,7 @@ public class TextHintList
         for (int i = 0; i < ligneCount; i++)
         {
             var dest = ligne + i * size;
-            textToInsert[i].SizeMult = hint.Size;
+            textToInsert[i].SizeMultiplicator = hint.Size;
             lignes[dest].Midle = textToInsert[i];
             for (int j = 1; j < size; j++)
             {
@@ -162,8 +161,10 @@ public class TextHintList
         var ligneCount = textToInsert.Count;
         var ligne = hint.Ligne;
         var size = hint.Size;
+
         if (ligneCount * hint.Size >= MaxLigne) return;
         if (ligne - hint.Size + 1 < 0) return;
+        
         for (int i = 0; i < ligneCount; i++)
         {
             var dest = ligne + i * size;
@@ -178,7 +179,7 @@ public class TextHintList
         for (int i = 0; i < ligneCount; i++)
         {
             var dest = ligne + i * size;
-            textToInsert[i].SizeMult = hint.Size; 
+            textToInsert[i].SizeMultiplicator = hint.Size; 
             lignes[dest].Left = textToInsert[i];
             for (int j = 1; j < size; j++)
             {
@@ -196,6 +197,7 @@ public class TextHintList
         var ligneCount = textToInsert.Count;
         var ligne = hint.Ligne;
         var size = hint.Size;
+        
         if (ligneCount * hint.Size >= MaxLigne) return;
         if (ligne - hint.Size + 1 < 0) return;
 
@@ -213,7 +215,7 @@ public class TextHintList
         for (int i = 0; i < ligneCount; i++)
         {
             var dest = ligne + i * size;
-            textToInsert[i].SizeMult = hint.Size;
+            textToInsert[i].SizeMultiplicator = hint.Size;
             lignes[dest].Right = textToInsert[i];
             for (int j = 1; j < size; j++)
             {
@@ -222,7 +224,6 @@ public class TextHintList
 
         }
     }
-
 
     private string GetMessage(Line[] Lignes)
     {
@@ -298,19 +299,22 @@ public class TextHintList
     #region Nesteds
     public class Line
     {
+        // this space is use to sperate the left and right and get a max of 81 char (for the base unite of 1) per line
+        internal const string SpaceAtSizeOne = "<mspace=0.65em><size=50%> </mspace></size>";
+
         public AnalysedSide Left { get; set; }
         public AnalysedSide Right { get; set; }
         public AnalysedSide Midle { get; set; }
-        public bool LeftFree => Left == null && Midle == null && !Gosht;
-        public bool RightFree => Right == null && Midle == null && !Gosht;
-        public bool MidleFree => Left == null && Right == null && Midle == null && !Gosht;
-
+        public bool LeftFree => !Gosht && Left == null && Midle == null;
+        public bool RightFree => !Gosht && Right == null && Midle == null;
+        public bool MidleFree => !Gosht && Left == null && Right == null && Midle == null;
         public bool Gosht { get; set; } = false;
 
         public override string ToString()
         {
             if (Gosht) return "";
-            string text = "";
+            
+            var text = "";
             if (Midle == null)
             {
                 text += "<align=\"left\">";
@@ -318,31 +322,25 @@ public class TextHintList
                 var rightText = Right;
                 if (leftText != null)
                 {
-                    var charSpace = SizeMspace[(int)Left.SizeMult];
+                    var charSpace = SizeMspace[(int)Left.SizeMultiplicator];
                     if (!leftText.IgnoreReformatage)
-                    {
-                        text += $"<mspace={charSpace}em><size={Left.SizeMult * 50}%>" + leftText;
-                    }
+                        text += $"<mspace={charSpace}em><size={Left.SizeMultiplicator * 50}%>" + leftText;
                     else
-                    {
                         text += leftText;
-                    }
                 }
                 if (rightText != null)
                 {
-                    var charSpace = SizeMspace[(int)rightText.SizeMult];
-                    var space = new string(' ', SizeMaxSide[(int)rightText.SizeMult] - rightText.TextWithoutTag.Length);
+                    var charSpace = SizeMspace[(int)rightText.SizeMultiplicator];
+                    var space = new string(' ', SizeMaxSide[(int)rightText.SizeMultiplicator] - rightText.TextWithoutTag.Length);
 
                     if (!rightText.IgnoreReformatage)
                     {
-                        text += $"<pos=50%><mspace=0.65em><size=50%> <mspace={charSpace}em><size={rightText.SizeMult * 50}%>";
-                        //                                          ^
-                        // this space is to sperate the left and right and get a max of 81 char (for the base unite of 1) per line
+                        text += $"<pos=50%>{SpaceAtSizeOne}<mspace={charSpace}em><size={rightText.SizeMultiplicator * 50}%>";
                         text += space + rightText;
                     }
                     else
                     {
-                        text += $"<mspace=0.65em><size=50%> </mspace></size>" + rightText;
+                        text += SpaceAtSizeOne + rightText;
                     }
                 }
             }
@@ -352,8 +350,8 @@ public class TextHintList
                 if (!midleText.IgnoreReformatage)
                 {
                     text += "<align=\"center\">";
-                    var charSpace = SizeMspace[(int)midleText.SizeMult];
-                    text += $"<mspace={charSpace}em><size={midleText.SizeMult * 50}%> " + midleText;
+                    var charSpace = SizeMspace[(int)midleText.SizeMultiplicator];
+                    text += $"<mspace={charSpace}em><size={midleText.SizeMultiplicator * 50}%> " + midleText;
                 }
                 else
                 {
@@ -367,37 +365,41 @@ public class TextHintList
     }
 
     public class AnalysedSide
-    { 
+    {
         public bool IgnoreReformatage { get; set; }
         public string FullText { get; internal set; }
         public string TextWithoutTag { get; internal set; }
         public List<string> Tags { get; internal set; }
         public List<string> NotClosedTags { get; internal set; }
-        public float SizeMult { get; internal set; }
-        public int LengthWithoutTag => TextWithoutTag.Length;
-        public int LengthWithTag => FullText.Length;
-        public float Lenght => TextWithoutTag.Length * SizeMult;
+        public float SizeMultiplicator { get; internal set; }
 
-        public AnalysedSide(string word, float charSizeMult, bool ignoreReformatage = false) : this(word, charSizeMult, new List<string>())
+        public int CharLengthNoTag => TextWithoutTag.Length;
+        public int CharLengthWithTag => FullText.Length;
+        public float ScreenLenght => TextWithoutTag.Length * SizeMultiplicator;
+
+        public AnalysedSide(string text, float charSizeMult, bool ignoreReformatage = false) : this(text, charSizeMult, new List<string>())
         {
             IgnoreReformatage = ignoreReformatage;
         }
 
-        public AnalysedSide(string word, float charSizeMult, List<string> notClosedTags)
+        public AnalysedSide(string text, float charSizeMult, List<string> notClosedTags)
         {
-            FullText = word;
-            SizeMult = charSizeMult;
-            TextWithoutTag = TextSpliter.TextWithoutTag(word);
-            var matches = Regex.Matches(word, "<.*?>");
-            Tags = new List<string>();
+            FullText = text;
+            SizeMultiplicator = charSizeMult;
+            TextWithoutTag = TextSpliter.TextWithoutTag(text); 
+            Tags = new List<string>(notClosedTags);
             NotClosedTags = new List<string>();
-            Tags.AddRange(notClosedTags);
+
+            var matches = Regex.Matches(text, BaliseMatchRegex);
+
             foreach (Match match in matches)
             {
                 Tags.Add(match.Value);
             }
+
             var closingTags = Tags.Where(p => p.StartsWith("</")).ToList();
             var openingTags = Tags.Where(p => !p.StartsWith("</")).ToList();
+            
             for (int i = openingTags.Count - 1; i >= 0; i--)
             {
                 int pos = openingTags[i].IndexOf("=");
@@ -411,6 +413,7 @@ public class TextHintList
             }
             NotClosedTags.AddRange(openingTags);
         }
+
         public override string ToString()
         {
             return FullText;
@@ -419,12 +422,12 @@ public class TextHintList
 
     public static class TextSpliter
     {
-        private const string LessReplace = @"＜";
-        private const string GreaterReplace = @"＞";
+        internal const string LessReplace = @"＜";
+        internal const string GreaterReplace = @"＞";
 
-        public static string TextWithoutTag(string text) => Regex.Replace(text, "<.*?>", string.Empty);
+        public static string TextWithoutTag(string text) => Regex.Replace(text, BaliseMatchRegex, string.Empty);
 
-        private static List<string> GetClosingTags(List<string> notClosed)
+        internal static List<string> GetClosingTags(List<string> notClosed)
         {
             var result = new List<string>();
             foreach (var tag in notClosed)
@@ -437,39 +440,35 @@ public class TextHintList
             return result;
         }
 
-        private static void ProcessLongWord(string elem, List<string> list, int lineLength, float charSizeMult)
+        private static void ProcessLongWord(string word, List<string> list, int lineLength, float charSizeMult)
         {
-            // mots trop grand a couper sans compter les tag
-            float nb = 0;
-            int pos = 0;
-            bool tag = false;
-            string word = "";
-            while (pos < elem.Length)
+            //words too big to cut without counting the tags
+            var totalCharsSize = 0f;
+            var letterIndex = 0;
+            var tagOpen = false;
+            var parsendWord = "";
+
+            while (letterIndex < word.Length)
             {
-                if (elem[pos] == '<')
-                {
-                    tag = true;
-                }
-                else if (tag && elem[pos] == '>')
-                {
-                    tag = false;
-                }
+                if (word[letterIndex] == '<')
+                    tagOpen = true;
+                else if (tagOpen && word[letterIndex] == '>')
+                    tagOpen = false;
                 else
+                    totalCharsSize += tagOpen ? 0 : charSizeMult;
+                
+                if (totalCharsSize > lineLength)
                 {
-                    nb += tag ? 0 : charSizeMult;
+                    totalCharsSize = 0;
+                    list.Add(parsendWord);
+                    parsendWord = "";
                 }
-                if (nb > lineLength)
-                {
-                    nb = 0;
-                    list.Add(word);
-                    word = "";
-                }
-                word += elem[pos];
-                pos++;
+                parsendWord += word[letterIndex];
+                letterIndex++;
             }
-            if (nb > 0)
+            if (totalCharsSize > 0)
             {
-                list.Add(word);
+                list.Add(parsendWord);
             }
         }
 
@@ -478,8 +477,8 @@ public class TextHintList
             text = text.Replace(@"\<", LessReplace);
             text = text.Replace(@"\>", GreaterReplace);
 
-            List<AnalysedSide> result = new List<AnalysedSide>();
-            if (Regex.Replace(text, "<.*?>", string.Empty).Length * charSizeMult <= lineLength)
+            var result = new List<AnalysedSide>();
+            if (TextWithoutTag(text).Length * charSizeMult <= lineLength)
             {
                 result.Add(new AnalysedSide(text, charSizeMult));
                 return result;
@@ -489,7 +488,7 @@ public class TextHintList
             var lst = new List<string>();
             foreach (var elem in lstSplit)
             {
-                if (Regex.Replace(elem, "<.*?>", string.Empty).Length * charSizeMult > lineLength)
+                if (TextWithoutTag(elem).Length * charSizeMult > lineLength)
                 {
                     ProcessLongWord(elem, lst, lineLength, charSizeMult);
                 }
@@ -500,27 +499,28 @@ public class TextHintList
             }
 
             var analysedList = new List<AnalysedSide>();
-            AnalysedSide previous = new AnalysedSide("", 1, new List<string>());
+            var previous = new AnalysedSide("", 1, new List<string>());
             foreach (var elem in lst)
             {
-                // but reporter les tag non fermer sur le suivant
+                // the objectif is to carry over unclosed tags to the next one
                 previous = new AnalysedSide(elem, charSizeMult, previous.NotClosedTags);
                 analysedList.Add(previous);
             }
-            // on recree les chaines 
+            // recreate the chaine
             var basestring = text;
-            float curSize = analysedList[0].Lenght;
-            int curChar = analysedList[0].FullText.Length;
+            var curSize = analysedList[0].ScreenLenght;
+            var curChar = analysedList[0].FullText.Length;
 
-            List<string> notClosed = new List<string>();
+            var notClosed = new List<string>();
             var count = analysedList.Count;
+
             for (int i = 1; i < count; i++)
             {
                 var element = analysedList[i];
-                if ((curSize + charSizeMult + element.Lenght) > lineLength - 1)
+                if ((curSize + charSizeMult + element.ScreenLenght) > lineLength - 1)
                 {
-                    int pos = basestring.IndexOf(analysedList[i - 1].FullText, curChar - analysedList[i - 1].FullText.Length);
-                    string ligne = basestring.Substring(0, pos + analysedList[i - 1].FullText.Length);
+                    var pos = basestring.IndexOf(analysedList[i - 1].FullText, curChar - analysedList[i - 1].FullText.Length);
+                    var ligne = basestring.Substring(0, pos + analysedList[i - 1].FullText.Length);
                     basestring = basestring.Substring(ligne.Length);
                     ligne = String.Join("", notClosed) + ligne;
                     notClosed = analysedList[i - 1].NotClosedTags;
@@ -531,14 +531,15 @@ public class TextHintList
                         ligne += String.Join("", closingTags);
                     }
                     result.Add(new AnalysedSide(ligne, charSizeMult));
-                    curSize = element.Lenght;
+                    curSize = element.ScreenLenght;
                     curChar = element.FullText.Length;
 
                     continue;
                 }
-                curSize += element.Lenght + charSizeMult;
+                curSize += element.ScreenLenght + charSizeMult;
                 curChar += element.FullText.Length + 1;
             }
+
             if (!String.IsNullOrEmpty(basestring))
             {
                 var closingTags = GetClosingTags(notClosed);
