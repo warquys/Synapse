@@ -86,13 +86,6 @@ public class Scp096Controller : ScpShieldController<Scp096Role>
 
         RageManager._targetsTracker.RemoveTarget(player);
     }
-    /*TODO:
-    public void ChargeDoor(SynapseDoor door)
-    {
-        if (IsInstance) return;
-        
-        Scp096.ChargeDoor(door.Variant);
-    }
-    */
+    
     public override RoleTypeId ScpRole => RoleTypeId.Scp096;
 }

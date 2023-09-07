@@ -6,15 +6,14 @@ using Neuron.Core.Logging;
 using PlayerRoles;
 using PlayerRoles.FirstPersonControl;
 using PlayerStatsSystem;
-using PluginAPI.Enums;
 using PluginAPI.Events;
 using RemoteAdmin;
 using Respawning;
 using RoundRestarting;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
-using Synapse3.SynapseModule.Role;
 using UnityEngine;
+using static Escape;
 using DamageType = Synapse3.SynapseModule.Enums.DamageType;
 
 namespace Synapse3.SynapseModule.Player;
@@ -247,7 +246,7 @@ public partial class SynapsePlayer
         if (HasCustomRole) return EscapeType.CustomRole;
         if (CurrentRole is not HumanRole) return EscapeType.NotAssigned;
 
-        if (IsDisarmed && !CharacterClassManager.CuffedChangeTeam) return EscapeType.NotAssigned;
+        if (disarmed && !CharacterClassManager.CuffedChangeTeam) return EscapeType.NotAssigned;
         switch (RoleType)
         {
             case RoleTypeId.ClassD when disarmed:
@@ -261,7 +260,21 @@ public partial class SynapsePlayer
             
             case RoleTypeId.Scientist:
                 return EscapeType.Scientist;
-            
+
+            case RoleTypeId.FacilityGuard when disarmed:
+                return EscapeType.CuffedGuard;
+
+            case RoleTypeId.FacilityGuard:
+                return EscapeType.Guard;
+
+            case RoleTypeId.NtfSpecialist when disarmed:
+            case >= RoleTypeId.NtfSergeant and <= RoleTypeId.NtfPrivate when disarmed:
+                return EscapeType.CuffedNtf;
+
+            case RoleTypeId.ChaosConscript when disarmed:
+            case >= RoleTypeId.ChaosRifleman and <= RoleTypeId.ChaosRepressor when disarmed:
+                return EscapeType.CuffedChaos;
+
             default: return EscapeType.NotAssigned;
         }
     }
@@ -296,17 +309,24 @@ public partial class SynapsePlayer
             
             case EscapeType.ClassD:
             case EscapeType.CuffedScientist:
+            case EscapeType.CuffedNtf:
+            case EscapeType.CuffedGuard:
                 vanillaRole = RoleTypeId.ChaosConscript;
                 break;
             
             case EscapeType.CuffedClassD:
+            case EscapeType.CuffedChaos:
                 vanillaRole = RoleTypeId.NtfPrivate;
                 break;
             
             case EscapeType.Scientist:
                 vanillaRole = RoleTypeId.NtfSpecialist;
                 break;
-            
+
+            case EscapeType.Guard:
+                vanillaRole = RoleTypeId.NtfSergeant;
+                break;
+
             case EscapeType.NotAssigned:
             case EscapeType.TooFarAway:
             case EscapeType.TooEarly:
@@ -317,25 +337,41 @@ public partial class SynapsePlayer
 
         if (!EventManager.ExecuteEvent(new PlayerEscapeEvent(Hub, vanillaRole))) return;
 
+        EscapeScenarioType scenarioType;
+
         switch (ev.EscapeType)
         {
             case EscapeType.ClassD:
+                RespawnTokensManager.GrantTokens(SpawnableTeamType.ChaosInsurgency, Escape.InsurgencyEscapeReward);
+                scenarioType = EscapeScenarioType.ClassD;
+                break;
+
+            case EscapeType.CuffedNtf:
+            case EscapeType.CuffedGuard:
             case EscapeType.CuffedScientist:
                 RespawnTokensManager.GrantTokens(SpawnableTeamType.ChaosInsurgency, Escape.InsurgencyEscapeReward);
+                scenarioType = EscapeScenarioType.CuffedScientist;
                 break;
             
+            case EscapeType.CuffedChaos:
             case EscapeType.CuffedClassD:
                 RespawnTokensManager.GrantTokens(SpawnableTeamType.NineTailedFox, Escape.FoundationEscapeReward);
+                scenarioType = EscapeScenarioType.CuffedClassD;
                 break;
             
+            case EscapeType.Guard:
             case EscapeType.Scientist:
                 RespawnTokensManager.GrantTokens(SpawnableTeamType.NineTailedFox, Escape.FoundationEscapeReward);
+                scenarioType = EscapeScenarioType.Scientist;
                 break;
+
+            default: return;
+
         }
-        
+
         SendNetworkMessage(new Escape.EscapeMessage()
         {
-            ScenarioId = (byte)ev.EscapeType,
+            ScenarioId = (byte)scenarioType,
             EscapeTime = (ushort)Mathf.CeilToInt(CurrentRole.ActiveTime)
         });
         RoleManager.ServerSetRole(vanillaRole, RoleChangeReason.Escaped);

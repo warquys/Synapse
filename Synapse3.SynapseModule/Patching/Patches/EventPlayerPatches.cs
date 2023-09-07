@@ -1,4 +1,6 @@
-﻿using CommandSystem;
+﻿using System;
+using System.Linq;
+using CommandSystem;
 using HarmonyLib;
 using Hazards;
 using Interactables.Interobjects.DoorUtils;
@@ -6,33 +8,30 @@ using InventorySystem;
 using InventorySystem.Items;
 using InventorySystem.Items.Firearms.Attachments;
 using InventorySystem.Items.Firearms.Modules;
+using InventorySystem.Items.Usables;
+using InventorySystem.Searching;
+using MapGeneration.Distributors;
 using Mirror;
 using Neuron.Core.Meta;
 using PlayerRoles;
+using PlayerRoles.FirstPersonControl;
+using PlayerRoles.FirstPersonControl.NetworkMessages;
 using PlayerRoles.Ragdolls;
 using PlayerRoles.Spectating;
+using PlayerRoles.Visibility;
 using PlayerRoles.Voice;
 using PlayerStatsSystem;
+using PluginAPI.Events;
+using RelativePositioning;
 using Respawning;
 using Synapse3.SynapseModule.Config;
 using Synapse3.SynapseModule.Dummy;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
+using Synapse3.SynapseModule.Item;
 using Synapse3.SynapseModule.Map;
 using Synapse3.SynapseModule.Player;
 using Synapse3.SynapseModule.Role;
-using System;
-using System.Linq;
-using InventorySystem.Items.Usables;
-using InventorySystem.Searching;
-using MapGeneration.Distributors;
-using PlayerRoles.FirstPersonControl;
-using PlayerRoles.FirstPersonControl.NetworkMessages;
-using PlayerRoles.Visibility;
-using PluginAPI.Enums;
-using PluginAPI.Events;
-using RelativePositioning;
-using Synapse3.SynapseModule.Item;
 using UnityEngine;
 using VoiceChat;
 using VoiceChat.Networking;
@@ -81,7 +80,7 @@ public static class FallingIntoAbyssPatch
 [SynapsePatch("Speak", PatchType.PlayerEvent)]
 public static class SpeakPatch
 {
-    private const int ProximityRange = 100; //Take the root of this so the range is 25
+    private const int ProximityRange = 100;
 
     private static readonly PlayerEvents Player;
     private static readonly SynapseConfigService Config;
@@ -665,7 +664,7 @@ public static class PlayerDeathPatch
                 playerMsg = string.Format(translation, attacker.DisplayName, attacker.RoleName);
             }
 
-            var ev = new DeathEvent(victim, true, attacker, damageType, damage, playerMsg, null);
+            var ev = new DeathEvent(victim, attacker, damageType, damage, playerMsg, string.Empty);
             PlayerEvent.Death.RaiseSafely(ev);
 
             if (!ev.Allow)
@@ -676,8 +675,16 @@ public static class PlayerDeathPatch
 
             playerMsg = ev.DeathMessage;
 
-            RagdollManager.ServerSpawnRagdoll(victim.Hub,
-                !string.IsNullOrWhiteSpace(ev.RagDollInfo) ? new CustomReasonDamageHandler(ev.RagDollInfo) : handler);
+            if (ev.SpawnRagdoll)
+            {
+                var ragdoll = RagdollManager.ServerSpawnRagdoll(victim.Hub,
+                    !string.IsNullOrWhiteSpace(ev.RagDollInfo) ? new CustomReasonDamageHandler(ev.RagDollInfo) : handler);
+                if (ev.RagdollSize != Vector3.one)
+                { 
+                    ragdoll.transform.localScale = ev.RagdollSize;
+                    NetworkServer.Spawn(ragdoll.gameObject);
+                }
+            }
 
             victim.Inventory.DropEverything();
             victim.RoleManager.ServerSetRole(RoleTypeId.Spectator, RoleChangeReason.Died);

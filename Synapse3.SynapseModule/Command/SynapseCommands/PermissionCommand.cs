@@ -8,7 +8,6 @@ namespace Synapse3.SynapseModule.Command.SynapseCommands;
     CommandName = "Permission",
     Aliases = new[] {"pm", "perm", "perms", "permissions"},
     Description = "A command to manage the permission system",
-    Permission = "",
     Platforms = new[] { CommandPlatform.ServerConsole, CommandPlatform.RemoteAdmin }
 )]
 public class PermissionCommand : SynapseCommand

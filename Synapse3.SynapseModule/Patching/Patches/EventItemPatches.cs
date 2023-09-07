@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using CustomPlayerEffects;
 using HarmonyLib;
 using InventorySystem.Items.MicroHID;
@@ -9,15 +7,12 @@ using InventorySystem.Items.Usables;
 using InventorySystem.Items.Usables.Scp330;
 using Mirror;
 using Neuron.Core.Meta;
-using PluginAPI.Core;
-using PluginAPI.Enums;
 using PluginAPI.Events;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Item;
 using UnityEngine;
 using Utils.Networking;
-using static System.Net.Mime.MediaTypeNames;
 using StatusMessage = InventorySystem.Items.Usables.StatusMessage;
 
 namespace Synapse3.SynapseModule.Patching.Patches;
@@ -333,7 +328,7 @@ public static class MicroExecutePatch
 
                 case HidState.PoweringUp:
                     if ((__instance.UserInput == HidUserInput.None &&
-                         __instance._stopwatch.Elapsed.TotalSeconds >= 0.35) || __instance.RemainingEnergy <= 0f)
+                         __instance._stopwatch.Elapsed.TotalSeconds >= MicroHIDItem.MinimalTimeToSwitchState) || __instance.RemainingEnergy <= 0f)
                         PowerDown();
                     else if (__instance.Readiness == 1f)
                     {
@@ -345,11 +340,11 @@ public static class MicroExecutePatch
 
                     energyToRemove =
                         __instance._energyConsumtionCurve.Evaluate((float)(__instance._stopwatch.Elapsed.TotalSeconds /
-                                                                           5.95));
+                                                                           MicroHIDItem.PowerupTime));
                     break;
 
                 case HidState.PoweringDown:
-                    if (__instance._stopwatch.Elapsed.TotalSeconds >= 3.1)
+                    if (__instance._stopwatch.Elapsed.TotalSeconds >= MicroHIDItem.PowerdownTime)
                     {
                         __instance.State = HidState.Idle;
                         __instance._stopwatch.Stop();
@@ -360,7 +355,7 @@ public static class MicroExecutePatch
 
                 case HidState.Primed:
                     if ((__instance.UserInput != HidUserInput.Prime &&
-                         __instance._stopwatch.Elapsed.TotalSeconds >= 0.35) || __instance.RemainingEnergy <= 0f)
+                         __instance._stopwatch.Elapsed.TotalSeconds >= MicroHIDItem.MinimalTimeToSwitchState) || __instance.RemainingEnergy <= 0f)
                     {
                         if (__instance.UserInput == HidUserInput.Fire && __instance.RemainingEnergy > 0f)
                         {
@@ -376,26 +371,26 @@ public static class MicroExecutePatch
                     break;
 
                 case HidState.Firing:
-                    if (__instance._stopwatch.Elapsed.TotalSeconds > 1.7)
+                    if (__instance._stopwatch.Elapsed.TotalSeconds <= MicroHIDItem.PreFireTime)
                     {
-                        energyToRemove = 0.13f;
-                        __instance.Fire();
-                        if (__instance.RemainingEnergy == 0f || (__instance.UserInput != HidUserInput.Fire &&
-                                                                 __instance._stopwatch.Elapsed.TotalSeconds >=
-                                                                 2.049999952316284))
-                        {
-                            if (__instance.RemainingEnergy > 0f && __instance.UserInput == HidUserInput.Prime)
-                            {
-                                __instance.State = HidState.Primed;
-                                __instance._stopwatch.Restart();
-                            }
-                            else PowerDown();
-                        }
-
+                        energyToRemove = __instance._energyConsumtionCurve.Evaluate(1f);
                         break;
                     }
 
-                    energyToRemove = __instance._energyConsumtionCurve.Evaluate(1f);
+                    energyToRemove = MicroHIDItem.FireEnergyConsumption;
+                    __instance.Fire();
+                    if (__instance.RemainingEnergy == 0f || (__instance.UserInput != HidUserInput.Fire &&
+                                                                __instance._stopwatch.Elapsed.TotalSeconds >=
+                                                                2.05))
+                    {
+                        if (__instance.RemainingEnergy > 0f && __instance.UserInput == HidUserInput.Prime)
+                        {
+                            __instance.State = HidState.Primed;
+                            __instance._stopwatch.Restart();
+                        }
+                        else PowerDown();
+                    }
+
                     break;
             }
 

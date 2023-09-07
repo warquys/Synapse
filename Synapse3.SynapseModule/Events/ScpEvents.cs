@@ -1,5 +1,6 @@
 ﻿using Neuron.Core.Events;
 using Neuron.Core.Meta;
+using PlayerRoles.PlayableScps.Scp106;
 using PlayerRoles.PlayableScps.Scp939;
 using PlayerStatsSystem;
 using Synapse3.SynapseModule.Enums;
@@ -233,17 +234,30 @@ public class Scp939AttackEvent : ScpAttackEvent
 
 public class Scp106AttackEvent : ScpAttackEvent
 {
+    public Scp106AttackEvent(SynapsePlayer scp, SynapsePlayer victim) : base(scp, victim, 0) { }
+
+    public Scp106AttackEvent(SynapsePlayer scp, float cooldown) : base(scp, null, 0)
+    {
+        TakeToPocket = false;
+        Cooldown = cooldown;
+        scp106AttackType = ScpAttackType.Scp106Miss;
+    }
+
     public Scp106AttackEvent(SynapsePlayer scp, SynapsePlayer victim, float damage, bool takeToPocket, float cooldown) : base(scp, victim, damage)
     {
         TakeToPocket = takeToPocket;
         Cooldown = cooldown;
+        scp106AttackType = ScpAttackType.Scp106OldGrab;
     }
 
-    public override ScpAttackType ScpAttackType => ScpAttackType.Scp106Grab;
+    internal ScpAttackType scp106AttackType;
+    public override ScpAttackType ScpAttackType { get => scp106AttackType; }
     
     public bool TakeToPocket { get; set; }
     
     public float Cooldown { get; set; }
+
+    public float VigoreReward { get; set; }
 }
 
 public class Scp173ObserveEvent : PlayerInteractEvent

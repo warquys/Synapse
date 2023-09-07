@@ -124,7 +124,7 @@ public class Throwable : ISubSynapseItem
     /// </summary>
     internal void DestroyProjectile()
     {
-        if (Projectile is not null)
+        if (Projectile != null)
             NetworkServer.Destroy(Projectile.gameObject);
         Projectile = null;
     }

@@ -12,5 +12,9 @@ public enum EscapeType
     NotAssigned,
     CustomRole,
     CustomTeamEvacuate,
-    PluginOverride
+    PluginOverride,
+    Guard,
+    CuffedGuard,
+    CuffedChaos,
+    CuffedNtf,
 }

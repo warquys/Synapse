@@ -4,16 +4,12 @@ using Footprinting;
 using HarmonyLib;
 using InventorySystem.Items.Armor;
 using InventorySystem.Items.Pickups;
-using MapGeneration;
 using MapGeneration.Distributors;
 using Neuron.Core.Meta;
-using PluginAPI.Core;
-using PluginAPI.Core.Items;
 using PlayerRoles;
 using PlayerRoles.FirstPersonControl;
-using PlayerRoles.PlayableScps.Scp079;
-using PluginAPI.Enums;
 using PluginAPI.Events;
+using Respawning;
 using Scp914;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
@@ -129,6 +125,34 @@ public static class TeslaPatch
     }
 }
 
+[Automatic]
+[SynapsePatch("CassieMessage", PatchType.MapEvent)]
+public static class CassieMessagePatch
+{
+    private static readonly MapEvents MapEvents;
+
+    static CassieMessagePatch() => MapEvents = Synapse.Get<MapEvents>();
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(RespawnEffectsController), nameof(RespawnEffectsController.PlayCassieAnnouncement))]
+    public static bool GeneratorInteract(ref string words, ref bool makeHold, ref bool makeNoise, bool customAnnouncement = false)
+    {
+        var ev = new CassieMessageEvent(words, makeHold, makeNoise);
+
+        MapEvents.CassieMessage.RaiseSafely(ev);
+
+        makeHold = ev.MakeHold;
+        makeNoise = ev.MakeNoise;
+        words = "";
+        foreach (var sentence in ev.CassieSentences)
+        {
+            words += $"<size=0>__</size>{sentence.Translation.Replace(' ', ' ')}<size=0> {sentence.Message} </size>";
+        }
+
+        return ev.Allow;
+    }
+}
+
 public static class DecoratedMapPatches
 {
     private static readonly MapEvents MapEvents;
@@ -185,7 +209,7 @@ public static class DecoratedMapPatches
                         if (ev.Allow)
                         {
                             gen.ServerSetFlag(Scp079Generator.GeneratorFlags.Unlocked, true);
-                            gen.ServerGrantTicketsConditionally(new Footprint(hub), 0.5f);
+                            gen.ServerGrantTicketsConditionally(new Footprint(hub), Scp079Generator.UnlockTokenReward);
                         }
                         else
                         {

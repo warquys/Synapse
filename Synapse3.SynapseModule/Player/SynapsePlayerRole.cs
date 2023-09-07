@@ -48,7 +48,7 @@ public partial class SynapsePlayer
             _customRole = value;
             _customRole.Player = this;
             _customRole.SpawnPlayer(prevRole, false);
-            _playerEvents.ChangeRole.Raise(new ChangeRoleEvent(this) { RoleId = value.Attribute.Id });
+            _playerEvents.ChangeRole.Raise(new ChangeRoleEvent(this, false) { RoleId = value.Attribute.Id });
         }
     }
 
@@ -270,7 +270,7 @@ public partial class SynapsePlayer
         _customRole = role;
         _customRole.Player = this;
         _customRole.SpawnPlayer(prevRole, liteSpawn);
-        _playerEvents.ChangeRole.Raise(new ChangeRoleEvent(this) { RoleId = role.Attribute.Id });
+        _playerEvents.ChangeRole.Raise(new ChangeRoleEvent(this, liteSpawn) { RoleId = role.Attribute.Id });
     }
 
     /// <summary>

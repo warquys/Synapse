@@ -31,12 +31,20 @@ public partial class SynapsePlayer
     public void Update()
     {
         _playerEvents.Update.Raise(new UpdateEvent(this));
-
+        
+            
         if (PlayerType != PlayerType.Player || HideRank ||
             !string.Equals(SynapseGroup.Color, "rainbow", StringComparison.OrdinalIgnoreCase)) return;
 
-        if (Time.time < _updateTime) return;
-        _updateTime = Time.time + _config.PermissionConfiguration.RainbowUpdateTime;
-        RankColor = _server.ValidatedBadgeColors.ElementAt(Random.Range(0, _server.ValidatedBadgeColors.Count));
+        if (Time.time >= _updateTime)
+        {
+            _updateTime = Time.time + _config.PermissionConfiguration.RainbowUpdateTime;
+            RankColor = _server.ValidatedBadgeColors.ElementAt(Random.Range(0, _server.ValidatedBadgeColors.Count));
+        }
+
+        if (Time.time >= ActiveHint.nextUpdate)
+        {
+            ActiveHint.UpdateText();
+        }
     }
 }

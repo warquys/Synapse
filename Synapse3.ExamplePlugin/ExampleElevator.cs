@@ -1,4 +1,5 @@
 ﻿using Neuron.Core.Meta;
+using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Map.Elevators;
 using Synapse3.SynapseModule.Map.Rooms;
 using UnityEngine;
@@ -25,7 +26,7 @@ public class ExampleElevator : CustomElevator
     public override float MoveSpeed => 1000f;
 }
 
-/*
+
 public class ElevatorEventHandler
 {
     public ElevatorEventHandler(PlayerEvents playerEvents, RoundEvents roundEvents)
@@ -41,7 +42,7 @@ public class ElevatorEventHandler
         var elevator = (ExampleElevator)ev.Door.ObjectData["elev"];
         var id = (uint)ev.Door.ObjectData["id"];
 
-        if (elevator.CurrentDestination.ElevatorId == id)
+        if (elevator.CurrentDestination == elevator.Destinations[id])
         {
             elevator.MoveToNext();
         }
@@ -55,4 +56,4 @@ public class ElevatorEventHandler
     {
         new ExampleElevator();
     }
-}*/
+}

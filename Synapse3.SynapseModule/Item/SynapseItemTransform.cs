@@ -44,13 +44,13 @@ public partial class SynapseItem
     {
         get
         {
-            if (Throwable.Projectile is not null)
+            if (Throwable.Projectile != null)
                 return Throwable.Projectile.transform.rotation;
 
-            if (Item is not null)
+            if (Item != null)
                 return ItemOwner?.Rotation ?? _rotation;
 
-            if (Pickup is not null)
+            if (Pickup != null)
                 return Pickup.Rotation;
 
             return _rotation;
@@ -59,13 +59,13 @@ public partial class SynapseItem
         {
             _rotation = value;
 
-            if (Pickup is not null)
+            if (Pickup != null)
             {
                 Pickup.Rotation = value;
                 //Pickup.RefreshPositionAndRotation();
             }
 
-            if (Throwable.Projectile is not null)
+            if (Throwable.Projectile != null)
             {
                 Throwable.Projectile.Rotation = value;
                 //Throwable.Projectile.RefreshPositionAndRotation();
@@ -87,7 +87,7 @@ public partial class SynapseItem
         set
         {
             _scale = value;
-            if (Schematic is not null)
+            if (Schematic != null)
             {
                 Schematic.Scale = value;
                 return;

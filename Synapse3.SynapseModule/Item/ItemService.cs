@@ -11,7 +11,7 @@ namespace Synapse3.SynapseModule.Item;
 
 public class ItemService : Service
 {
-    public const int HighestItem = (int)ItemType.AntiSCP207;
+    public const int HighestItem = (int)ItemType.GunA7;
     
     private readonly RoundEvents _round;
     private readonly Synapse _synapseModule;
@@ -45,7 +45,7 @@ public class ItemService : Service
     internal Dictionary<ushort, SynapseItem> _allItems { get; } = new ();
 
     public ReadOnlyCollection<SynapseItem> AllItems =>
-        _allItems.Select(x => x.Value).Where(x => x is not null).ToList().AsReadOnly();
+        _allItems.Select(x => x.Value).Where(x => x != null).ToList().AsReadOnly();
 
     /// <summary>
     /// Returns the SynapseItem with that Serial or SynapseIte.None

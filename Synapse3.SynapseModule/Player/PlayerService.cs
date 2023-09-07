@@ -34,7 +34,7 @@ public class PlayerService : Service
     {
         _player.Join.Subscribe(Join);
         _round.Restart.Subscribe(RoundRestart);
-        _player.SetClass.Subscribe(ChangeClass);
+        _player.SetClass.Subscribe(ChangeClass, -200);
         _player.ChangeRole.Subscribe(ChangeRole);
     }
 
@@ -335,6 +335,7 @@ public class PlayerService : Service
 
     private void ChangeClass(SetClassEvent ev)
     {
+        if (!ev.Allow) return;
         ev.Player.MainScpController.ProximityChat = false;
         ev.Player._maxHealth = -1;
         switch (ev.Player.RoleType)
@@ -349,9 +350,14 @@ public class PlayerService : Service
         
         Timing.CallDelayed(Timing.WaitForOneFrame, () =>
         {
+            var spawnLight = (ev.SpawnFlags & (RoleSpawnFlags.UseSpawnpoint | RoleSpawnFlags.AssignInventory)) == RoleSpawnFlags.None;
+
             if (ev.Player.CustomRole == null)
-                _player.ChangeRole.RaiseSafely(new ChangeRoleEvent(ev.Player) { RoleId = (uint)ev.Role });
-            
+            {
+                var id = RoleTypeId.None == ev.Role ? uint.MaxValue : (uint)ev.Role;
+                _player.ChangeRole.RaiseSafely(new ChangeRoleEvent(ev.Player, spawnLight) { RoleId = id });
+            }
+
             foreach (var player in GetPlayers(PlayerType.Player,PlayerType.Dummy))
             {
                 if (ev.Player == player || player.CustomInfo.IsForEveryoneEqual) continue;

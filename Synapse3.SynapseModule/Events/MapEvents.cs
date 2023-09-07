@@ -20,6 +20,7 @@ public partial class MapEvents : Service
     public readonly EventReactor<DetonateWarheadEvent> DetonateWarhead = new();
     public readonly EventReactor<CancelWarheadEvent> CancelWarhead = new();
     public readonly EventReactor<GeneratorEngageEvent> GeneratorEngage = new();
+    public readonly EventReactor<CassieMessageEvent> CassieMessage = new();
 
     public MapEvents(EventManager eventManager, Synapse synapse)
     {
@@ -35,7 +36,8 @@ public partial class MapEvents : Service
         _eventManager.RegisterEvent(DetonateWarhead);
         _eventManager.RegisterEvent(CancelWarhead);
         _eventManager.RegisterEvent(GeneratorEngage);
-        
+        _eventManager.RegisterEvent(CassieMessage);
+
         PluginAPI.Events.EventManager.RegisterEvents(_synapse,this);
     }
 
@@ -47,6 +49,7 @@ public partial class MapEvents : Service
         _eventManager.UnregisterEvent(DetonateWarhead);
         _eventManager.UnregisterEvent(CancelWarhead);
         _eventManager.UnregisterEvent(GeneratorEngage);
+        _eventManager.UnregisterEvent(CassieMessage);
     }
 }
 
@@ -145,4 +148,42 @@ public class DetonateWarheadEvent : IEvent
 public class CancelWarheadEvent : PlayerInteractEvent
 {
     public CancelWarheadEvent(SynapsePlayer player, bool allow) : base(player, allow) { }
+}
+
+public class CassieMessageEvent : IEvent
+{
+    public CassieMessageEvent(string message, bool makeHold, bool makeNoise)
+    {
+        var sentences = message.Split('\n');
+        CassieSentences = new();
+
+        foreach (var sentence in sentences)
+        {
+            CassieSentences.Add(new CassieSentence()
+            {
+                Message = sentence,
+                Translation = ""
+            });
+        }
+
+        MakeHold = makeHold;
+        MakeNoise = makeNoise;
+    }
+
+    public bool Allow { get; set; } = true;
+
+    public List<CassieSentence> CassieSentences { get; set; }
+
+    public bool MakeHold { get; set; }
+    
+    public bool MakeNoise { get; set; }
+
+    public struct CassieSentence
+    {
+        public string Message { get; set; }
+
+        public string Translation { get; set; }
+
+    }
+
 }

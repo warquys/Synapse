@@ -19,7 +19,7 @@ public class Scp939Controller : ScpShieldController<Scp939Role>
     public MimicryRecorder MimicryRecorder => Role?.GetSubroutine<MimicryRecorder>();
     public FirearmRippleTrigger RippleTrigger => Role?.GetSubroutine<FirearmRippleTrigger>();
 
-    //TODO:
+    //TODO: Patch ValidateVisibility
     public List<SynapsePlayer> VisiblePlayers { get; } = new();
 
     public Scp939LungeState State 

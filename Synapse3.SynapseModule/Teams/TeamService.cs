@@ -90,6 +90,17 @@ public class TeamService : Service
         };
     }
 
+    public string GetRespawningTeamName(uint id)
+    {
+        return id switch
+        {
+            0 => "None",
+            1 => "Chaos Insurgency",
+            2 => "Nine Tailed Fox",
+            _ => GetTeam(id)?.Attribute.Name ?? ""
+        };
+    }
+
     public bool IsIdRegistered(uint id)
         => IsDefaultId(id) || _teams.Any(x => x.Attribute.Id == id);
 

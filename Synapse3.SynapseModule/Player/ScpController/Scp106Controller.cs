@@ -25,7 +25,7 @@ public class Scp106Controller : ScpShieldController<Scp106Role>
         if (Attack != null)
         {
             Attack.SendCooldown(Attack._hitCooldown);
-            Attack.Vigor.VigorAmount += 0.3f;
+            Attack.Vigor.CurValue += Scp106Attack.VigorCaptureReward;
             Attack.ReduceSinkholeCooldown();
             Hitmarker.SendHitmarker(Attack.Owner, 1f);
             Synapse3Extensions.RaiseEvent(typeof(Scp106Attack), nameof(Scp106Attack.OnPlayerTeleported), player.Hub);
@@ -33,7 +33,6 @@ public class Scp106Controller : ScpShieldController<Scp106Role>
             var effectsController = player.Hub.playerEffectsController;
             effectsController.EnableEffect<Traumatized>(180f);
             effectsController.EnableEffect<Corroding>();
-            NeuronLogger.For<Synapse>().Warn("TryGetComponent End: ");
         }
     }
 

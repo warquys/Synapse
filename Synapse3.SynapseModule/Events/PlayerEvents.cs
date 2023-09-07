@@ -335,14 +335,16 @@ public class DamageEvent : PlayerInteractEvent
 
 public class DeathEvent : PlayerInteractEvent
 {
-    public DeathEvent(SynapsePlayer player, bool allow, SynapsePlayer attacker, DamageType damageType,
-        float lastTakenDamage, string playerMessage, string ragDollMessage) : base(player, allow)
+    public DeathEvent(SynapsePlayer player, SynapsePlayer attacker, DamageType damageType,
+        float lastTakenDamage, string playerMessage, string ragDollMessage) : base(player, true)
     {
         Attacker = attacker;
         DamageType = damageType;
         LastTakenDamage = lastTakenDamage;
         DeathMessage = playerMessage;
         RagDollInfo = ragDollMessage;
+        SpawnRagdoll = true;
+        RagdollSize = player.Scale;
     }
 
     public SynapsePlayer Attacker { get; }
@@ -354,6 +356,12 @@ public class DeathEvent : PlayerInteractEvent
     public string DeathMessage { get; set; }
 
     public string RagDollInfo { get; set; }
+
+    public bool SpawnRagdoll { get; set; }
+
+    public Vector3 RagdollSize { get; set; }
+
+
 }
 
 public class FreePlayerEvent : PlayerInteractEvent
@@ -601,7 +609,12 @@ public class ChangeRoleEvent : PlayerEvent
 {
     public uint RoleId { get; set; }
 
-    public ChangeRoleEvent(SynapsePlayer player) : base(player) { }
+    public bool SpawnLite { get; set; }
+        
+    public ChangeRoleEvent(SynapsePlayer player, bool spawnLite) : base(player) 
+    {
+        SpawnLite = spawnLite;
+    }
 }
 
 public class KickEvent : PlayerInteractEvent

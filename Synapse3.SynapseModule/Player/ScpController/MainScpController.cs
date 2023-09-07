@@ -1,4 +1,5 @@
 ﻿using PlayerRoles;
+using PluginAPI.Roles;
 using Synapse3.SynapseModule.Config;
 
 namespace Synapse3.SynapseModule.Player.ScpController;
@@ -13,10 +14,12 @@ public class MainScpController
     {
         _player = player;
         Scp079 = new(player);
-        Scp096 = new Scp096Controller(player);
-        Scp106 = new Scp106Controller(player);
-        Scp173 = new Scp173Controller(player);
-        Scp939 = new Scp939Controller(player);
+        Scp096 = new(player);
+        Scp106 = new(player);
+        Scp173 = new(player);
+        Scp939 = new(player);
+        Scp049 = new(player);
+        Scp0492 = new(player);
         _config = config;
     }
 
@@ -29,6 +32,10 @@ public class MainScpController
     public readonly Scp173Controller Scp173;
 
     public readonly Scp939Controller Scp939;
+
+    public readonly Scp049Controller Scp049;
+
+    public readonly Scp0492Controller Scp0492;
 
     public bool ProximityToggle(out string message, out bool enabled)
     {
@@ -56,6 +63,8 @@ public class MainScpController
             RoleTypeId.Scp106 => Scp106,
             RoleTypeId.Scp173 => Scp173,
             RoleTypeId.Scp939 => Scp939,
+            RoleTypeId.Scp049 => Scp049,
+            RoleTypeId.Scp0492 => Scp0492,
             _ => null
         };
 }

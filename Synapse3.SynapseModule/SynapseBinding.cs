@@ -192,7 +192,9 @@ public partial class Synapse
     private void OnPluginLoadLate(PluginLoadEvent args)
     {
         if (args.Context.PluginType.GetCustomAttribute<HeavyModded>() != null)
-            CustomNetworkManager.HeavilyModded = true;
+        {
+            //CustomNetworkManager.Modded HeavilyModded = true;
+        }
         
         args.Context.MetaBindings
             .OfType<SynapseElevatorBinding>()
@@ -259,8 +261,10 @@ public partial class Synapse
     private void LoadModuleLate(ModuleLoadEvent args)
     {
         if (args.Context.ModuleType.GetCustomAttribute<HeavyModded>() != null)
-            CustomNetworkManager.HeavilyModded = true;
-        
+        {
+            //CustomNetworkManager.HeavilyModded = true;
+        }
+
         args.Context.MetaBindings
             .OfType<SynapseElevatorBinding>()
             .ToList().ForEach(binding =>

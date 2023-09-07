@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Hazards;
 using Interactables.Interobjects.DoorUtils;
@@ -148,7 +149,8 @@ public class MapService : Service
     private void RagDollSpawned(BasicRagdoll rag)
     {
         if(_synapseRagdolls.Any(x => x.BasicRagDoll == rag)) return;
-        _ = new SynapseRagDoll(rag);
+        var ragdoll = new SynapseRagDoll(rag);
+        ragdoll 
     }
 
     public DoorType GetDoorByName(string doorName)

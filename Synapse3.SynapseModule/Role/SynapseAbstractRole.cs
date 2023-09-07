@@ -196,18 +196,49 @@ public abstract class SynapseAbstractRole : SynapseRole
         Player.CustomInfo.UpdateInfo();
     }
 
+
     public override void TryEscape()
     {
-        var config = GetConfig();
-        if(config.EscapeRole == RoleService.NoneRole) return;
-        if (!_role.IsIdRegistered(config.EscapeRole)) return;
+        uint newRoleId;
+        var disamer = Player.Disarmer;
+
+        if (disamer != null) 
+        {
+            if (!_config.GamePlayConfiguration.AnyRoleCuffedJoinEnemy 
+                && Attribute.TeamId is not (uint)Team.ClassD and not (uint)Team.Scientists)
+                return;
+
+            switch (Attribute.TeamId)
+            {
+                case (uint)Team.ChaosInsurgency:
+                case (uint)Team.ClassD:
+                    newRoleId = (uint)RoleTypeId.ChaosConscript;
+                    return;
+                
+                case (uint)Team.FoundationForces:
+                case (uint)Team.Scientists:
+                    newRoleId = (uint)RoleTypeId.NtfPrivate;
+                    return;
+                
+                default: return;
+            }
+        }
+        else 
+        {
+            var config = GetConfig();
+            newRoleId = config.EscapeRole;
+        }
+
+        if (newRoleId == RoleService.NoneRole) return;
+        if (!_role.IsIdRegistered(newRoleId)) return;
         
         var items = Player.Inventory.Items.ToList();
         foreach (var item in items)
         {
             item.Destroy();
         }
-        Player.RoleID = config.EscapeRole;
+
+        Player.RoleID = newRoleId;
         foreach (var item in items)
         {
             Player.Inventory.GiveItem(item);

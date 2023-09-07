@@ -13,7 +13,7 @@ namespace Synapse3.SynapseModule.Config;
 [DocumentSection("GamePlay")]
 public class GamePlayConfiguration : IDocumentSection
 {
-    [Description("If Enabled everyone can attack everyone after the Round ended")]
+    [Description("If enabled everyone can attack everyone after the Round ended")]
     public bool AutoFriendlyFire { get; set; } = true;
 
     [Description("If enabled a Player don't need to equip his keycard to use it")]
@@ -58,4 +58,12 @@ public class GamePlayConfiguration : IDocumentSection
         (uint)RoleTypeId.Scp939,
         (uint)RoleTypeId.Tutorial
     };
+
+    [Description("If enabled when an ntf handcuffs a player other than class D he can evacuate and become a cadet same for the chaos")]
+    public bool AnyRoleCuffedJoinEnemy { get; set; } = true;
+    public bool GuardEscape { get; set; } = true;
+
+    [Description("If enabled 106 can caputure like beffor 1.13")]
+    public bool OldScp106Attack { get; set; } = true;
+
 }

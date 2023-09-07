@@ -12,7 +12,6 @@ namespace Synapse3.SynapseModule.Command.SynapseCommands;
     CommandName = "KeyPress",
     Aliases = new[] { "key" },
     Description = "A command for the KeyPressEvent from Synapse",
-    Permission = "",
     Platforms = new [] { CommandPlatform.PlayerConsole }
 )]
 public class KeyPressCommand : SynapseCommand

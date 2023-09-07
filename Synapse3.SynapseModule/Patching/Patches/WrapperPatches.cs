@@ -258,7 +258,7 @@ public static class ArtificialHealthPatch
     public static bool ServerAddProcess(AhpStat __instance, float amount, out AhpStat.AhpProcess __result)
     {
         var player = __instance.GetSynapsePlayer();
-        __result = __instance.ServerAddProcess(amount, player.MaxArtificialHealth, player.DecayArtificialHealth, 0.7f,
+        __result = __instance.ServerAddProcess(amount, player.MaxArtificialHealth, player.DecayArtificialHealth, AhpStat.DefaultEfficacy,
             0f, false);
         return false;
     }

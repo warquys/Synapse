@@ -1,11 +1,13 @@
-﻿using GameCore;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using GameCore;
 using HarmonyLib;
 using MEC;
 using Neuron.Core.Logging;
 using Neuron.Core.Meta;
 using PlayerRoles;
 using PlayerRoles.RoleAssign;
-using PluginAPI.Enums;
 using PluginAPI.Events;
 using Respawning;
 using RoundRestarting;
@@ -15,9 +17,6 @@ using Synapse3.SynapseModule.Map;
 using Synapse3.SynapseModule.Player;
 using Synapse3.SynapseModule.Role;
 using Synapse3.SynapseModule.Teams;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using static Respawning.RespawnManager;
 using Console = GameCore.Console;
@@ -113,6 +112,7 @@ public static class FirstSpawnPatch
                 AmountOfScpSpawns = amountOfScp,
                 HumanQueue = RoleAssigner._humanQueue
             };
+
             _round.FirstSpawn.RaiseSafely(ev);
             _blockedPlayer = ev.PlayersBlockedFromSpawning;
             if (ev.EnableLateJoin)

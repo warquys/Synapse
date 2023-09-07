@@ -18,7 +18,7 @@ public class SynapseDoor : NetworkSynapseObject, IJoinUpdate
 
     public DoorVariant Variant { get; }
 
-    public override GameObject GameObject => Variant.gameObject;
+    public override GameObject GameObject => Variant?.gameObject;
 
     public override NetworkIdentity NetworkIdentity => Variant.netIdentity;
 

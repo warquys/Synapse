@@ -17,9 +17,9 @@ public partial class SynapseItem
             switch (State)
             {
                 case ItemState.ServerSideOnly:
-                case ItemState.Map: return Pickup.gameObject;
-                case ItemState.Inventory: return Item.gameObject;
-                case ItemState.Thrown: return Throwable.Projectile.gameObject;
+                case ItemState.Map: return Pickup?.gameObject;
+                case ItemState.Inventory: return Item?.gameObject;
+                case ItemState.Thrown: return Throwable?.Projectile?.gameObject;
 
                 case ItemState.BeforeSpawn:
                 case ItemState.Despawned:

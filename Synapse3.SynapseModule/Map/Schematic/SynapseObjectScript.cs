@@ -74,7 +74,19 @@ public class SynapseObjectScript : MonoBehaviour
 
     private void MoveElevator(ElevatorMoveContentEvent ev)
     {
-        var gameObject = Object?.GameObject;
+        GameObject gameObject;
+
+        try//TODO
+        {
+            gameObject = Object?.GameObject;
+        }
+        catch (System.Exception _)
+        {
+            SynapseLogger<SynapseObjectScript>.Error("Elevator Error " + Object.GetType().FullName);
+            if (Object is SynapseDoor door)
+                SynapseLogger<SynapseObjectScript>.Error("Elevtor Door Error " + (door.Variant == null));
+            return; 
+        }
         if (gameObject == null) return;
 
         if (ev.CustomElevator)

@@ -6,6 +6,7 @@ using Neuron.Core;
 using Neuron.Core.Events;
 using Neuron.Core.Meta;
 using PlayerRoles;
+using PluginAPI.Roles;
 using Scp914;
 using Synapse3.SynapseModule.Config;
 using Synapse3.SynapseModule.Dummy;
@@ -96,8 +97,8 @@ public class DebugService : Service
         
         _item.ConsumeItem.Subscribe(ev =>
         {
-            //if (ev.State == ItemInteractState.Finalize)
-            //    ev.Allow = false;
+            if (ev.State == ItemInteractState.Finalize)
+                ev.Allow = false;
         });
         _player.Escape.Subscribe(ev =>
         {
@@ -138,16 +139,25 @@ public class DebugService : Service
     }
 
     private SynapseDummy _dummy;
-
+    
     private void OnKeyPress(KeyPressEvent ev)
     {
 
         switch (ev.KeyCode)
         {
             case KeyCode.Alpha1:
+                ev.Player.Inventory.GiveItem(ItemType.Adrenaline);
+                ev.Player.Inventory.GiveItem(ItemType.Medkit);
+                ev.Player.Inventory.GiveItem(ItemType.Painkillers);
                 break;
 
             case KeyCode.Alpha2:
+                SynapseLogger<DebugService>.Info("Effects: ");
+                foreach (var effect in ev.Player.PlayerEffectsController.AllEffects)
+                {
+                    SynapseLogger<DebugService>.Info(effect.name);
+                }
+
                 break;
 
             case KeyCode.Alpha3:

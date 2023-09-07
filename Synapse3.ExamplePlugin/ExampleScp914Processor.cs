@@ -20,7 +20,7 @@ public class ExampleScp914Processor : ISynapse914Processor
             Scp914KnobSetting.Coarse => ItemType.KeycardJanitor,
             Scp914KnobSetting.Rough => ItemType.KeycardScientist,
             Scp914KnobSetting.OneToOne => ItemType.KeycardResearchCoordinator,
-            Scp914KnobSetting.Fine => ItemType.KeycardNTFCommander,
+            Scp914KnobSetting.Fine => ItemType.KeycardMTFCaptain,
             Scp914KnobSetting.VeryFine => ItemType.KeycardO5,
             _ => ItemType.None
         };

@@ -7,43 +7,43 @@ using System.Text.RegularExpressions;
 using Hints;
 using MEC;
 using Synapse3.SynapseModule.Enums;
+using UnityEngine;
 
 namespace Synapse3.SynapseModule.Player;
 
 /// <summary>
 /// Do not use Rich Text 
 /// </summary>
-public class TextHintList
-    : ICollection<SynapseTextHint>
+public class TextHintList : ICollection<ISynapseTextHint>
 {
     #region Properties & Variables
-    internal static Dictionary<int, int> SizeMaxSide = new Dictionary<int, int>()
+
+    public const int MaxLigne = 54;
+    public const int GosthLigne = 15;
+    internal const string BaliseMatchRegex = "<.*?>";
+
+    internal static readonly Dictionary<int, int> SizeMaxSide = new Dictionary<int, int>()
     {
         { 1, 40 },//Total per ligne is 81 
         { 2, 21 },//Total per ligne is 43
         { 3, 15 },//Total per ligne is 31
     };
 
-    internal static Dictionary<int, float> SizeMspace = new Dictionary<int, float>()
+    internal static readonly Dictionary<int, float> SizeMspace = new Dictionary<int, float>()
     {
         { 1, 0.85f },
         { 2, 1.60f },
         { 3, 2.20f }
     };
 
-    internal const string BaliseMatchRegex = "<.*?>";
+    internal readonly SynapsePlayer _player;
+    internal readonly List<ISynapseTextHint> _textHints = new List<ISynapseTextHint>();
 
-    public const int MaxLigne = 54;
-    public const int GosthLigne = 15;
+    internal float nextUpdate = 0;
 
-    readonly SynapsePlayer _player;
-    readonly List<SynapseTextHint> _textHints = new List<SynapseTextHint>();
-    
-    public ReadOnlyCollection<SynapseTextHint> TextHints => _textHints.AsReadOnly();
+    public ReadOnlyCollection<ISynapseTextHint> TextHints => _textHints.AsReadOnly();
     public int Count => TextHints.Count;
     public bool IsReadOnly => false;
-
-    private CoroutineHandle updateCallBack;
     #endregion
 
     #region Constructor & Destructor
@@ -55,14 +55,18 @@ public class TextHintList
     #endregion
 
     #region Methods
-    public void UpdateText()
+    internal void UpdateText()
     {
-        Timing.KillCoroutines(updateCallBack);
+        if (_textHints.Count == 0) return;
+
         RemoveExpierd();
 
-        var hintsCount = _textHints.Count;
-        if (hintsCount == 0) return;
-        
+        if (_textHints.Count == 0) 
+        {
+            _player.SendHint(string.Empty, 1);
+            return;
+        }
+
         var lignes = new Line[MaxLigne];
         for (int i = 0; i < MaxLigne; i++)
             lignes[i] = new Line();
@@ -70,19 +74,14 @@ public class TextHintList
         foreach (var textHint in _textHints.OrderBy(p => p.Priority))
             ProcessHint(lignes, textHint);
 
-        var displayTime = _textHints.OrderBy(p => p.DisplayTimeLeft).First(p => p.Displaying).DisplayTimeLeft + 0.01f;
+        var displayTime = _textHints.OrderBy(p => p.DisplayTimeLeft).First(p => p.Displaying).DisplayTimeLeft + 0.25f;
         var playerHint = new TextHint(GetMessage(lignes), new HintParameter[]
         {
             new StringHintParameter("")
         }, null, displayTime);
 
-        if (hintsCount == 1)
-        { 
-            playerHint._effects = HintEffectPresets.FadeInAndOut(displayTime);
-        }
-
         _player.Hub.hints.Show(playerHint);
-        updateCallBack = Timing.RunCoroutine(CallBackUpdateText(displayTime));
+        nextUpdate = Time.time + Math.Min(displayTime, 2);
     }
 
     private void RemoveExpierd()
@@ -97,7 +96,7 @@ public class TextHintList
     }
 
 
-    private void ProcessHint(Line[] lignes, SynapseTextHint hint)
+    private void ProcessHint(Line[] lignes, ISynapseTextHint hint)
     {
         if (!hint.Displaying) hint.StartDisplay();
 
@@ -115,7 +114,7 @@ public class TextHintList
         }
     }
 
-    private void ProcesseMidle(Line[] lignes, SynapseTextHint hint)
+    private void ProcesseMidle(Line[] lignes, ISynapseTextHint hint)
     {
         var textToInsert = hint.IgnoreParsing ?
             new List<AnalysedSide>() { new AnalysedSide(hint.Text, 0, true) } :
@@ -153,7 +152,7 @@ public class TextHintList
         }
     }
     
-    private void ProcesseLeft(Line[] lignes, SynapseTextHint hint)
+    private void ProcesseLeft(Line[] lignes, ISynapseTextHint hint)
     {
         var textToInsert = hint.IgnoreParsing ?
             new List<AnalysedSide>() { new AnalysedSide(hint.Text, 0, true) } :
@@ -189,7 +188,7 @@ public class TextHintList
         }
     }
 
-    private void ProcesseRight(Line[] lignes, SynapseTextHint hint)
+    private void ProcesseRight(Line[] lignes, ISynapseTextHint hint)
     {
         var textToInsert = hint.IgnoreParsing ?
             new List<AnalysedSide>() { new AnalysedSide(hint.Text, 0, true) } :
@@ -240,25 +239,18 @@ public class TextHintList
     }
 
     #region List Methods
-    private IEnumerator<float> CallBackUpdateText(float time)
-    {
-        yield return Timing.WaitForSeconds(Math.Min(time, 2));
-        UpdateText();//I can't catch the hint of the client (max ammo, item and ect...) so i override them
-        yield break;
-    }
-
-    public void AddWithoutUpdate(SynapseTextHint hint)
+    public void AddWithoutUpdate(ISynapseTextHint hint)
     {
         _textHints.Add(hint);
     }
 
-    public void Add(SynapseTextHint hint)
+    public void Add(ISynapseTextHint hint)
     {
         _textHints.Add(hint);
         UpdateText();
     }
 
-    public bool Remove(SynapseTextHint hint)
+    public bool Remove(ISynapseTextHint hint)
     {
         if (_textHints.Remove(hint))
         {
@@ -280,13 +272,13 @@ public class TextHintList
         }
     }
 
-    public bool Contains(SynapseTextHint hint)
+    public bool Contains(ISynapseTextHint hint)
         => _textHints.Contains(hint);
 
-    public void CopyTo(SynapseTextHint[] array, int arrayIndex)
+    public void CopyTo(ISynapseTextHint[] array, int arrayIndex)
         => _textHints.CopyTo(array, arrayIndex);
 
-    public IEnumerator<SynapseTextHint> GetEnumerator()
+    public IEnumerator<ISynapseTextHint> GetEnumerator()
         => _textHints.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator()
