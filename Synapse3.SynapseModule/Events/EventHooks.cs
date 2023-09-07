@@ -37,7 +37,7 @@ public partial class PlayerEvents
         var damageAmount = damageHandler is StandardDamageHandler standard ? standard.Damage : -1;
         var ev = new DamageEvent(player.GetSynapsePlayer(), true, target?.GetSynapsePlayer(),
             damageHandler.GetDamageType(), damageAmount);
-        Damage.RaiseSafely(ev);
+        Damage.RaiseSafely(ev); FirearmDamageHandler
         if (damageHandler is StandardDamageHandler standardDamageHandler) standardDamageHandler.Damage = ev.Damage;
         return ev.Allow;
     }
