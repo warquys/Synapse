@@ -21,6 +21,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
     public const int MaxLigne = 54;
     public const int GosthLigne = 15;
     internal const string BaliseMatchRegex = "<.*?>";
+    internal static Regex CompiledBaliseMatchRegex = new Regex(BaliseMatchRegex, RegexOptions.Compiled);
 
     internal static readonly Dictionary<int, int> SizeMaxSide = new Dictionary<int, int>()
     {
@@ -382,7 +383,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
             Tags = new List<string>(notClosedTags);
             NotClosedTags = new List<string>();
 
-            var matches = Regex.Matches(text, BaliseMatchRegex);
+            var matches = Regex.Matches(text, CompiledBaliseMatchRegex);
 
             foreach (Match match in matches)
             {
@@ -417,7 +418,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
         internal const string LessReplace = @"＜";
         internal const string GreaterReplace = @"＞";
 
-        public static string TextWithoutTag(string text) => Regex.Replace(text, BaliseMatchRegex, string.Empty);
+        public static string TextWithoutTag(string text) => Regex.Replace(text, CompiledBaliseMatchRegex, string.Empty);
 
         internal static List<string> GetClosingTags(List<string> notClosed)
         {

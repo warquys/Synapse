@@ -162,7 +162,7 @@ public class CassieMessageEvent : IEvent
             CassieSentences.Add(new CassieSentence()
             {
                 Message = sentence,
-                Translation = ""
+                Translation = sentence
             });
         }
 
