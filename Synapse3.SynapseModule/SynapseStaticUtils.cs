@@ -12,7 +12,7 @@ namespace Synapse3.SynapseModule;
 public partial class Synapse
 {
     public const int Major = 3;
-    public const int Minor = 1;
+    public const int Minor = 2;
     public const int Patch = 0;
     
 #if CUSTOM_VERSION

@@ -195,7 +195,7 @@ public static class Synapse3Extensions
 
         if (type != DamageType.Universal) return type;
         var id = ((UniversalDamageHandler)handler).TranslationId;
-
+        
         if (id > 23) return DamageType.Universal;
         
         return (DamageType)id;

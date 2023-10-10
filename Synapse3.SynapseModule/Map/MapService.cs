@@ -150,7 +150,6 @@ public class MapService : Service
     {
         if(_synapseRagdolls.Any(x => x.BasicRagDoll == rag)) return;
         var ragdoll = new SynapseRagDoll(rag);
-        ragdoll 
     }
 
     public DoorType GetDoorByName(string doorName)

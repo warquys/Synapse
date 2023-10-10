@@ -664,7 +664,7 @@ public static class PlayerDeathPatch
                 playerMsg = string.Format(translation, attacker.DisplayName, attacker.RoleName);
             }
 
-            var ev = new DeathEvent(victim, attacker, damageType, damage, playerMsg, string.Empty);
+            var ev = new DeathEvent(victim, attacker, damageType, damage, playerMsg, handler);
             PlayerEvent.Death.RaiseSafely(ev);
 
             if (!ev.Allow)

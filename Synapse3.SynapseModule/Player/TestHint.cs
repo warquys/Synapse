@@ -14,7 +14,7 @@ public interface ISynapseTextHint
     bool Displaying { get; }
     bool Expired { get; }
     float DisplayTime { get; }
-    float DisplayTimeLeft { get; }
+    float NextRefresh { get; }
     bool IgnoreParsing { get; }
     int Ligne { get; }
     int Priority { get; }
@@ -37,7 +37,7 @@ public class ConstantTextHint : ISynapseTextHint
     public bool Displayed { get; internal set; }
     public bool Displaying { get; internal set; }
     public bool Expired => finish;
-    public float DisplayTimeLeft => finish ? 0 : 1;
+    public float NextRefresh => finish ? 0 : 1;
     public float DisplayTime => float.MaxValue;
     public string Text { get; set; }
     public int Ligne { get; set; }
@@ -90,10 +90,10 @@ public class SynapseTextHint : ISynapseTextHint
 
     public bool Displayed { get; internal set; }
     public bool Displaying { get; internal set; }
-    public bool Expired => !forceFinish && Displaying && DisplayTimeLeft <= 0;
+    public bool Expired => !forceFinish && Displaying && NextRefresh <= 0;
     
     private float _displayRemoveTime;
-    public float DisplayTimeLeft => _displayRemoveTime - (float)NetworkTime.time;
+    public float NextRefresh => _displayRemoveTime - (float)NetworkTime.time;
     public float DisplayTime { get; set; }
     public string Text { get; set; }
     public int Ligne { get; set; }

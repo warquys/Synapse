@@ -75,7 +75,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
         foreach (var textHint in _textHints.OrderBy(p => p.Priority))
             ProcessHint(lignes, textHint);
 
-        var displayTime = _textHints.OrderBy(p => p.DisplayTimeLeft).First(p => p.Displaying).DisplayTimeLeft + 0.25f;
+        var displayTime = _textHints.OrderBy(p => p.NextRefresh).First(p => p.Displaying).NextRefresh + 0.25f;
         var playerHint = new TextHint(GetMessage(lignes), new HintParameter[]
         {
             new StringHintParameter("")
@@ -383,7 +383,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
             Tags = new List<string>(notClosedTags);
             NotClosedTags = new List<string>();
 
-            var matches = Regex.Matches(text, CompiledBaliseMatchRegex);
+            var matches = CompiledBaliseMatchRegex.Matches(text);
 
             foreach (Match match in matches)
             {
@@ -418,7 +418,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
         internal const string LessReplace = @"＜";
         internal const string GreaterReplace = @"＞";
 
-        public static string TextWithoutTag(string text) => Regex.Replace(text, CompiledBaliseMatchRegex, string.Empty);
+        public static string TextWithoutTag(string text) => CompiledBaliseMatchRegex.Replace(text, string.Empty);
 
         internal static List<string> GetClosingTags(List<string> notClosed)
         {

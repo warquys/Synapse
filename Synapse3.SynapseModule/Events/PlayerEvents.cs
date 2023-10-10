@@ -4,6 +4,7 @@ using Neuron.Core.Events;
 using Neuron.Core.Meta;
 using PlayerRoles;
 using PlayerRoles.FirstPersonControl;
+using PlayerStatsSystem;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Item;
 using Synapse3.SynapseModule.Map.Elevators;
@@ -336,16 +337,19 @@ public class DamageEvent : PlayerInteractEvent
 public class DeathEvent : PlayerInteractEvent
 {
     public DeathEvent(SynapsePlayer player, SynapsePlayer attacker, DamageType damageType,
-        float lastTakenDamage, string playerMessage, string ragDollMessage) : base(player, true)
+        float lastTakenDamage, string playerMessage, DamageHandlerBase damageHandler) : base(player, true)
     {
         Attacker = attacker;
         DamageType = damageType;
         LastTakenDamage = lastTakenDamage;
         DeathMessage = playerMessage;
-        RagDollInfo = ragDollMessage;
+        RagDollInfo = string.Empty;
         SpawnRagdoll = true;
         RagdollSize = player.Scale;
+        DamageHandlerBase = damageHandler;
     }
+
+    public DamageHandlerBase DamageHandlerBase { get; private set; }
 
     public SynapsePlayer Attacker { get; }
 
