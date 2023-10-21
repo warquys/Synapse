@@ -14,8 +14,10 @@ using Scp914;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Item;
+using Synapse3.SynapseModule.Map;
 using Synapse3.SynapseModule.Player;
 using UnityEngine;
+using static UnityStandardAssets.CinematicEffects.Bloom;
 
 namespace Synapse3.SynapseModule.Patching.Patches;
 
@@ -129,24 +131,41 @@ public static class TeslaPatch
 [SynapsePatch("CassieMessage", PatchType.MapEvent)]
 public static class CassieMessagePatch
 {
+    internal static bool ActivePatch = true;
+    
     private static readonly MapEvents MapEvents;
+    private static readonly CassieService Cassie;
 
-    static CassieMessagePatch() => MapEvents = Synapse.Get<MapEvents>();
+    static CassieMessagePatch()
+    {
+        MapEvents = Synapse.Get<MapEvents>();
+        Cassie = Synapse.Get<CassieService>();
+    }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(RespawnEffectsController), nameof(RespawnEffectsController.PlayCassieAnnouncement))]
-    public static bool GeneratorInteract(ref string words, ref bool makeHold, ref bool makeNoise, bool customAnnouncement = false)
+    public static bool PlayCassieAnnouncement(ref string words, ref bool makeHold, ref bool makeNoise, ref bool customAnnouncement)
     {
-        var ev = new CassieMessageEvent(words, makeHold, makeNoise);
-
+        if (!ActivePatch) return true;
+        var settings = new List<CassieSettings>();
+        if (makeHold)
+            settings.Add(CassieSettings.Break);
+        if (makeNoise)
+            settings.Add(CassieSettings.Noise);
+        if (customAnnouncement)
+            settings.Add(CassieSettings.DisplayText);
+        
+        var ev = new CassieMessageEvent(words, settings);
+        
         MapEvents.CassieMessage.RaiseSafely(ev);
 
-        makeHold = ev.MakeHold;
-        makeNoise = ev.MakeNoise;
-        words = "";
-        foreach (var sentence in ev.CassieSentences)
+        makeHold = ev.Settings.Contains(CassieSettings.Break);
+        makeNoise = ev.Settings.Contains(CassieSettings.Noise);
+        customAnnouncement = ev.Settings.Contains(CassieSettings.DisplayText);
+
+        if (ev.CustomTranslation)
         {
-            words += $"<size=0>__</size>{sentence.Translation.Replace(' ', ' ')}<size=0> {sentence.Message} </size>";
+            words = string.Join(string.Empty, ev.CassieSentences);
         }
 
         return ev.Allow;

@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Neuron.Core.Events;
 using Neuron.Core.Meta;
+using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Item;
+using Synapse3.SynapseModule.Map;
 using Synapse3.SynapseModule.Map.Elevators;
 using Synapse3.SynapseModule.Map.Objects;
 using Synapse3.SynapseModule.Player;
 using UnityEngine;
+using static UnityStandardAssets.CinematicEffects.Bloom;
 
 namespace Synapse3.SynapseModule.Events;
 
@@ -152,7 +156,7 @@ public class CancelWarheadEvent : PlayerInteractEvent
 
 public class CassieMessageEvent : IEvent
 {
-    public CassieMessageEvent(string message, bool makeHold, bool makeNoise)
+    public CassieMessageEvent(string message, List<CassieSettings> settings)
     {
         var sentences = message.Split('\n');
         CassieSentences = new();
@@ -165,25 +169,22 @@ public class CassieMessageEvent : IEvent
                 Translation = sentence
             });
         }
+        Settings = settings.ToList();
+        CustomTranslation = false;
+    }
 
-        MakeHold = makeHold;
-        MakeNoise = makeNoise;
+    public CassieMessageEvent(List<CassieSentence> cassieSentence, params CassieSettings[] settings)
+    {
+        CassieSentences = new (cassieSentence);
+        Settings = settings.ToList();
+        CustomTranslation = true;
     }
 
     public bool Allow { get; set; } = true;
 
+    public bool CustomTranslation { get; set; }
+
     public List<CassieSentence> CassieSentences { get; set; }
 
-    public bool MakeHold { get; set; }
-    
-    public bool MakeNoise { get; set; }
-
-    public struct CassieSentence
-    {
-        public string Message { get; set; }
-
-        public string Translation { get; set; }
-
-    }
-
+    public List<CassieSettings> Settings { get; private set; }
 }
