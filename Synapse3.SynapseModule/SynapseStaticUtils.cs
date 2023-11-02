@@ -12,7 +12,7 @@ namespace Synapse3.SynapseModule;
 public partial class Synapse
 {
     public const int Major = 3;
-    public const int Minor = 2;
+    public const int Minor = 3;
     public const int Patch = 0;
     
 #if CUSTOM_VERSION
@@ -25,8 +25,8 @@ public const VersionType Type = VersionType.Dev;
     public const VersionType Type = VersionType.None;
 #endif
 
-    public const string SubVersion = "1.4 unstable";
-    public const string BasedGameVersion = "13.2.0";
+    public const string SubVersion = "2.0 unstable";
+    public const string BasedGameVersion = "13.2.1";
 
     /// <summary>
     /// Returns an instance of the specified object by either resolving it using

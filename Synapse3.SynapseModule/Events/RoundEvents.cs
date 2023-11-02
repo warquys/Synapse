@@ -56,6 +56,8 @@ public partial class RoundEvents : Service
         _eventManager.UnregisterEvent(FirstSpawn);
         _eventManager.UnregisterEvent(Decontamination);
         _eventManager.UnregisterEvent(Decontamination);
+    
+        PluginAPI.Events.EventManager.UnregisterEvents(_synapse, this);
     }
 }
 

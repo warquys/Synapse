@@ -152,6 +152,8 @@ public partial class PlayerEvents : Service
 
         WalkOnSinkhole.Unsubscribe(WalkOnHazard.Raise);
         WalkOnTantrum.Unsubscribe(WalkOnHazard.Raise);
+        
+        PluginAPI.Events.EventManager.UnregisterEvents(_synapse, this);
     }
 }
 

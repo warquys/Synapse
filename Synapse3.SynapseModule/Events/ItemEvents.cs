@@ -31,6 +31,7 @@ public partial class ItemEvents : Service
     {
         _eventManager = eventManager;
         _synapse = synapse;
+        float
     }
 
     public override void Enable()
@@ -81,6 +82,8 @@ public partial class ItemEvents : Service
         RadioUse.Unsubscribe(BasicInteract.Raise);
         ThrowGrenade.Unsubscribe(BasicInteract.Raise);
         MicroUse.Unsubscribe(BasicInteract.Raise);
+
+        PluginAPI.Events.EventManager.UnregisterEvents(_synapse, this);
     }
 }
 

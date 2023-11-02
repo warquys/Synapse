@@ -119,6 +119,8 @@ public partial class ScpEvents : Service
         _eventManager.UnregisterEvent(Scp173ActivateBreakneckSpeed);
         
         _eventManager.UnregisterEvent(Scp939Attack);
+    
+        PluginAPI.Events.EventManager.UnregisterEvents(_synapse, this);
     }
 }
 

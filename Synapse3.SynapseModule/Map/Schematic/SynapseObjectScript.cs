@@ -76,7 +76,7 @@ public class SynapseObjectScript : MonoBehaviour
     {
         GameObject gameObject;
 
-        try//TODO
+        try//TODO: Find the bug
         {
             gameObject = Object?.GameObject;
         }

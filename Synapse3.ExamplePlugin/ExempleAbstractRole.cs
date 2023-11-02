@@ -58,8 +58,8 @@ public class ExampleAbstractRole : SynapseAbstractRole
 
         public RoomPoint[] PossibleSpawns { get; set; } = new RoomPoint[]
         {
-        new RoomPoint("Surface", new Vector3(8.5875f, -7.672f, -40.53928f), Vector3.zero),
-        new RoomPoint("Surface", new Vector3(5.3678f, -7.672f, -40.53928f), Vector3.zero),
+            new RoomPoint("Surface", new Vector3(8.5875f, -7.672f, -40.53928f), Vector3.zero),
+            new RoomPoint("Surface", new Vector3(5.3678f, -7.672f, -40.53928f), Vector3.zero),
         };
 
         public SerializedPlayerInventory[] PossibleInventories { get; set; } = new SerializedPlayerInventory[]

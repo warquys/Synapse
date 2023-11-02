@@ -54,6 +54,8 @@ public partial class MapEvents : Service
         _eventManager.UnregisterEvent(CancelWarhead);
         _eventManager.UnregisterEvent(GeneratorEngage);
         _eventManager.UnregisterEvent(CassieMessage);
+    
+        PluginAPI.Events.EventManager.UnregisterEvents(_synapse, this);
     }
 }
 

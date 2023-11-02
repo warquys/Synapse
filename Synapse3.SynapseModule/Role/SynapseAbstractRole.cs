@@ -39,7 +39,7 @@ public abstract class SynapseAbstractRole : SynapseRole
     protected virtual void OnSpawn(IAbstractRoleConfig config) { }
 
     protected virtual void OnDeSpawn(DeSpawnReason reason) { }
-
+    //All role need to be displaying Unite
     protected virtual bool CanSeeUnit(SynapsePlayer player) => player.TeamID == Attribute.TeamId;
     protected virtual bool CanNotSeeUnit(SynapsePlayer player) => !CanSeeUnit(player);
 

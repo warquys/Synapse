@@ -11,7 +11,7 @@
         <RootNamespace>Synapse3.SynapseModule</RootNamespace>
         <PackageId>SynapseSL</PackageId>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <PackageVersion>3.0.0-pre1</PackageVersion>
+        <PackageVersion>3.3.0</PackageVersion>
         <Title>Synapse</Title>
         <Authors>Dimenzio, Helight, OneWholesomeDev</Authors>
         <Description>Synapse is a High Level Plugin/Module Server side framework for the Steam Game SCP Secret Laboratory based on Harmony Patches and Neuron.</Description>
@@ -20,8 +20,8 @@
         <RepositoryUrl>https://synapsesl.xyz</RepositoryUrl>
         <RepositoryType></RepositoryType>
         <PackageTags>Synapse SCP SL SCPSL SCP:SL PluginFramwork ModuleFramework SynapseSL Plugin Plugins Module Modules SCP-SL Secret-Lab SCPSL-Server Secret-Laboratory Dimenzio Helight UselessJavaDevMineTech13</PackageTags>
-        <AssemblyVersion>3.0.0</AssemblyVersion>
-        <FileVersion>3.0.0</FileVersion>
+        <AssemblyVersion>3.3.0</AssemblyVersion>
+        <FileVersion>3.3.0</FileVersion>
         <PackageLicenseUrl>https://licenses.nuget.org/GPL-3.0-or-later</PackageLicenseUrl>
         <IsPackable>false</IsPackable>
     </PropertyGroup>

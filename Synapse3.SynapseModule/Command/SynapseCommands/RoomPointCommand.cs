@@ -35,7 +35,7 @@ public class RoomPointCommand : SynapseCommand
                           $"\n  x: {point.position.X}" +
                           $"\n  y: {point.position.Y}" +
                           $"\n  z: {point.position.Z}";
-                          result.StatusCode = CommandStatusCode.Ok;
+        result.StatusCode = CommandStatusCode.Ok;
 
         RaClipboard.Send(context.Player.CommandSender, RaClipboard.RaClipBoardType.PlayerId,
             $"{point.roomName} {point.position.X} {point.position.Y} {point.position.Z}");
