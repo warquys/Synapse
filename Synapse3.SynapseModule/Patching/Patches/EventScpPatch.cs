@@ -856,7 +856,7 @@ public static class Scp049AttackPatch
 
             Synapse3Extensions.RaiseEvent(__instance, nameof(Scp049AttackAbility.OnServerHit), __instance._target);
             __instance.ServerSendRpc(true);
-            Hitmarker.SendHitmarker(__instance.Owner, 1f);
+            Hitmarker.SendHitmarkerDirectly(__instance.Owner, 1f);
             return false;
         }
         catch (Exception e)
@@ -886,10 +886,66 @@ public static class Scp106AttackPatch
     {
         try
         {
+            var scp = __instance.Owner.GetSynapsePlayer();
+            var victim = __instance._targetHub.GetSynapsePlayer();
+            var playerEffectsController = victim?.PlayerEffectsController;
+
+            var victimPostion = __instance._claimedTargetPosition;
+
+            var serverVictimPostion = victim.Position;
+            var serverScpPostion = scp.Position;
+
+            using (new FpcBacktracker(victim, victimPostion, 0.35f))
+            {
+                var vector = serverVictimPostion - serverScpPostion;
+                var sqrMagnitude = vector.sqrMagnitude;
+
+                if (sqrMagnitude > __instance._maxRangeSqr) return false;
+
+                var forward = __instance.OwnerCam.forward;
+                forward.y = 0f;
+                vector.y = 0f;
+                if (Physics.Linecast(serverScpPostion, serverVictimPostion, MicroHIDItem.WallMask))
+                    return false;
+
+                if (__instance._dotOverDistance.Evaluate(sqrMagnitude) > Vector3.Dot(vector.normalized, forward.normalized))
+                {
+                    var evMisse = new Scp106MissAttackEvent(scp, __instance._missCooldown);
+
+                    if (!evMisse.Allow)
+                        return false;
+
+                    if (!evMisse.IgnoreMiss)
+                    {
+                        if (evMisse.Cooldown != 0)
+                            evMisse.Scp.MainScpController.Scp106.Attack.SendCooldown(evMisse.Cooldown);
+                    }
+                }
+            }
+
             if (_config.GamePlayConfiguration.OldScp106Attack)
-                Old106Attack(__instance);
-            else
-                New106Attack(__instance);
+            {
+                Attack(new Scp106AttackEvent(scp, victim, ScpAttackType.Scp106OldGrab));
+                return false;
+            }
+            
+            if (playerEffectsController.GetEffect<Traumatized>().IsEnabled)
+            {
+                Attack(new Scp106AttackEvent(scp, victim, ScpAttackType.Scp106Termination));
+                return false;
+            }
+
+            var effect = playerEffectsController.GetEffect<Corroding>();
+            if (effect.IsEnabled)
+            {
+                Attack(new Scp106AttackEvent(scp, victim, ScpAttackType.Scp106NewGrab));
+                return false;
+            }
+
+            if (!Attack(new Scp106AttackEvent(scp, victim, ScpAttackType.Scp106Corroding)))
+                return false;
+            effect.AttackerHub = scp;
+            playerEffectsController.EnableEffect<Corroding>(20f);
             return false;
         }
         catch (Exception ex)
@@ -899,149 +955,36 @@ public static class Scp106AttackPatch
         }
     }
 
-    public static void New106Attack(Scp106Attack __instance)
+    internal static bool Attack(Scp106AttackEvent ev)
     {
-        Scp106AttackEvent ev;
-        var scp = __instance.Owner.GetSynapsePlayer();
-        var victim = __instance._targetHub.GetSynapsePlayer();
-        var playerEffectsController = victim?.PlayerEffectsController;
+        _scp.Scp106Attack.RaiseSafely(ev);
 
-        using (new FpcBacktracker(__instance._targetHub, __instance._targetPosition, 0.35f))
+        if (ev.Allow) return false;
+
+        if (ev.Damage != 0) //TODO: Find how to minimize conflicts with the NW API
+            ev.Victim.Hurt(new ScpDamageHandler(ev.Scp, ev.Damage, DeathTranslations.PocketDecay));
+
+        if (ev.Cooldown != 0)
+            ev.Scp.MainScpController.Scp106.Attack.SendCooldown(ev.Cooldown);
+
+        if (ev.SinkholeCooldown != 0)
+            ev.Scp.MainScpController.Scp106.sinkhole.Cooldown.NextUse -= ev.SinkholeCooldown;
+
+        if (ev.VigoreReward != 0)
+            ev.Scp.MainScpController.Scp106.Vigor += ev.VigoreReward;
+
+        // CapturePlayer allready do a Hitmaker
+        if (ev.TakeToPocket)
         {
-            var vector = __instance._targetPosition - __instance._ownerPosition;
-            var sqrMagnitude = vector.sqrMagnitude;
-
-            if (sqrMagnitude > __instance._maxRangeSqr) return;
-
-            var forward = __instance.OwnerCam.forward;
-            forward.y = 0f;
-            vector.y = 0f;
-            if (Physics.Linecast(__instance._ownerPosition, __instance._targetPosition, MicroHIDItem.WallMask))
-                return;
-
-            if (__instance._dotOverDistance.Evaluate(sqrMagnitude) > Vector3.Dot(vector.normalized, forward.normalized))
-            {
-                ev = new Scp106AttackEvent(scp, __instance._missCooldown);
-                _scp.Scp106Attack.RaiseSafely(ev);
-                if (!ev.Allow) return;
-                __instance.SendCooldown(ev.Cooldown);
-                return;
-            }
-
-            ev = new Scp106AttackEvent(scp, victim);
-            ev.Allow = EventManager.ExecuteEvent(new Scp106TeleportPlayerEvent(__instance.Owner, __instance._targetHub));
-        }
-
-        if (!Attack(Scp106Attack.AttackDamage, __instance._hitCooldown, false, 0, false, ScpAttackType.Scp106Hurt))
-            return;
-
-        __instance.ReduceSinkholeCooldown();
-        Hitmarker.SendHitmarker(__instance.Owner, 1f);
-
-        if (playerEffectsController.GetEffect<Traumatized>().IsEnabled)
-        {
-            Attack(Scp106Attack.InstaKillAmount, 0, false, Scp106Attack.VigorCaptureReward, true, ScpAttackType.Scp106Termination);
-            return;
-        }
-
-        var effect = playerEffectsController.GetEffect<Corroding>();
-        if (effect.IsEnabled)
-        {
-            Attack(0, 0, true, Scp106Attack.VigorCaptureReward, true, ScpAttackType.Scp106NewGrab);
+            ev.Scp.MainScpController.Scp106.CapturePlayer(ev.Victim, false);
+            return false;
         }
         else
         {
-            if (!Attack(0, 0, false, 0, true, ScpAttackType.Scp106Corroding))
-                return;
-            effect.AttackerHub = scp;
-            playerEffectsController.EnableEffect<Corroding>(20f);
+            Hitmarker.SendHitmarkerDirectly(ev.Scp, 1f);
         }
 
-        bool Attack(float damage, float cooldown, bool pocketTp, float vigor, bool final, ScpAttackType scpAttackType)
-        {
-            ev.Cooldown += cooldown;
-            ev.Damage = damage;
-            ev.TakeToPocket = pocketTp;
-            ev.VigoreReward = vigor;
-            ev.scp106AttackType = scpAttackType;
-
-            _scp.Scp106Attack.RaiseSafely(ev);
-            
-            if (ev.Allow) return false;
-
-            if (ev.Damage != 0 && !victim.Hurt(new ScpDamageHandler(scp, ev.Damage, DeathTranslations.PocketDecay)))
-                    return false;
-
-            if (final && ev.Cooldown != 0)
-                __instance.SendCooldown(ev.Cooldown);
-
-            if (ev.VigoreReward != 0)
-                __instance.VigorAmount += ev.VigoreReward;
-
-            if (ev.TakeToPocket)
-            {
-                Synapse3Extensions.RaiseEvent(typeof(Scp106Attack), nameof(Scp106Attack.OnPlayerTeleported), scp.Hub, victim.Hub);
-                playerEffectsController.EnableEffect<PocketCorroding>();
-                __instance.VigorAmount += Scp106Attack.VigorCaptureReward;
-                scp.MainScpController.Scp106.PlayersInPocket.Add(ev.Victim);
-            }
-
-            return true;
-        }
-    }
-
-    public static void Old106Attack(Scp106Attack __instance)
-    {
-        Scp106AttackEvent ev;
-        var scp = __instance.Owner.GetSynapsePlayer();
-        var victim = __instance._targetHub.GetSynapsePlayer();
-
-        using (new FpcBacktracker(scp, __instance._targetPosition, Scp106Attack.TargetTraceTime))
-        {
-            var vector = __instance._targetPosition - __instance._ownerPosition;
-            var sqrMagnitude = vector.sqrMagnitude;
-            if (sqrMagnitude > __instance._maxRangeSqr)
-                return;
-
-            var forward = __instance.OwnerCam.forward;
-            forward.y = 0f;
-            vector.y = 0f;
-            if (Physics.Linecast(__instance._ownerPosition, __instance._targetPosition, MicroHIDItem.WallMask))
-                return;
-
-            if (__instance._dotOverDistance.Evaluate(sqrMagnitude) > Vector3.Dot(vector.normalized, forward.normalized))
-            {
-                ev = new Scp106AttackEvent(scp, __instance._missCooldown);
-                _scp.Scp106Attack.RaiseSafely(ev);
-                if (!ev.Allow) return;
-                __instance.SendCooldown(ev.Cooldown);
-                return;
-            }
-
-            ev = new Scp106AttackEvent(scp, victim, __instance._damage, true, __instance._hitCooldown)
-            {
-                VigoreReward = Scp106Attack.VigorCaptureReward
-            };
-            ev.Allow = EventManager.ExecuteEvent(new Scp106TeleportPlayerEvent(scp.Hub, __instance._targetHub));
-            _scp.Scp106Attack.RaiseSafely(ev);
-            if (!ev.Allow) return;
-
-            var handler = new ScpDamageHandler(__instance.Owner, ev.Damage, DeathTranslations.PocketDecay);
-            if (!victim.Hurt(handler))
-                return;
-        }
-
-        __instance.SendCooldown(ev.Cooldown);
-        __instance.Vigor.CurValue += ev.VigoreReward;
-        __instance.ReduceSinkholeCooldown();
-        Hitmarker.SendHitmarker(scp, 1f);
-        if (!ev.TakeToPocket) return;
-
-        Synapse3Extensions.RaiseEvent(typeof(Scp106Attack), nameof(Scp106Attack.OnPlayerTeleported), scp.Hub, victim.Hub);
-        var playerEffectsController = victim.PlayerEffectsController;
-        playerEffectsController.EnableEffect<Traumatized>(180f);
-        playerEffectsController.EnableEffect<Corroding>();
-        scp.MainScpController.Scp106.PlayersInPocket.Add(ev.Victim);
+        return true;
     }
 }
 
@@ -1096,7 +1039,7 @@ public static class Scp173AttackSnapPatch
                 {
                     if (target.playerStats.DealDamage(damageHandler))
                     {
-                        Hitmarker.SendHitmarker(__instance.Owner, 1f);
+                        Hitmarker.SendHitmarkerDirectly(__instance.Owner, 1f);
                         if (__instance.ScpRole.SubroutineModule.TryGetSubroutine<Scp173AudioPlayer>(out var subroutine))
                         {
                             subroutine.ServerSendSound(Scp173AudioPlayer.Scp173SoundId.Snap);
@@ -1195,7 +1138,7 @@ public static class Scp173AttackTpPatch
             if (!__instance.ScpRole.SubroutineModule.TryGetSubroutine<Scp173AudioPlayer>(out var audioPlayer))
                 return false;
 
-            Hitmarker.SendHitmarker(__instance.Owner, 1f);
+            Hitmarker.SendHitmarkerDirectly(__instance.Owner, 1f);
             audioPlayer.ServerSendSound(Scp173AudioPlayer.Scp173SoundId.Snap);
 
             return false;

@@ -3,12 +3,14 @@ using Neuron.Core.Meta;
 using PlayerRoles.PlayableScps.Scp106;
 using PlayerRoles.PlayableScps.Scp939;
 using PlayerStatsSystem;
+using PluginAPI.Events;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Map.Elevators;
 using Synapse3.SynapseModule.Map.Objects;
 using Synapse3.SynapseModule.Map.Rooms;
 using Synapse3.SynapseModule.Player;
 using UnityEngine;
+using EventManager = Neuron.Core.Events.EventManager;
 
 namespace Synapse3.SynapseModule.Events;
 
@@ -236,30 +238,69 @@ public class Scp939AttackEvent : ScpAttackEvent
 
 public class Scp106AttackEvent : ScpAttackEvent
 {
-    public Scp106AttackEvent(SynapsePlayer scp, SynapsePlayer victim) : base(scp, victim, 0) { }
-
-    public Scp106AttackEvent(SynapsePlayer scp, float cooldown) : base(scp, null, 0)
+    public Scp106AttackEvent(SynapsePlayer scp, SynapsePlayer victim, ScpAttackType scpAttackType) : base(scp, victim, 0) 
     {
-        TakeToPocket = false;
-        Cooldown = cooldown;
-        scp106AttackType = ScpAttackType.Scp106Miss;
+        ScpAttackType = scpAttackType;
+        switch (ScpAttackType)
+        {
+            case ScpAttackType.Scp106OldGrab:
+                TakeToPocket = true;
+                Cooldown = scp.MainScpController.Scp106.Attack._hitCooldown;
+                VigoreReward = Scp106Attack.VigorCaptureReward * 100;
+                SinkholeCooldown = -Scp106Attack.CooldownReductionReward;
+                if (Allow)
+                    Allow = PluginAPI.Events.EventManager.ExecuteEvent(new Scp106TeleportPlayerEvent(scp, victim));
+                break;
+            case ScpAttackType.Scp106Termination:
+                Damage = Scp106Attack.InstaKillAmount;
+                TakeToPocket = false;
+                Cooldown = scp.MainScpController.Scp106.Attack._hitCooldown;
+                VigoreReward = Scp106Attack.VigorCaptureReward * 100;
+                SinkholeCooldown = -Scp106Attack.CooldownReductionReward;
+                break;
+            case ScpAttackType.Scp106NewGrab:
+                Damage = Scp106Attack.AttackDamage;
+                TakeToPocket = true;
+                Cooldown = scp.MainScpController.Scp106.Attack._hitCooldown;
+                VigoreReward = Scp106Attack.VigorCaptureReward * 100;
+                SinkholeCooldown = -Scp106Attack.CooldownReductionReward;
+                if (Allow)
+                    Allow = PluginAPI.Events.EventManager.ExecuteEvent(new Scp106TeleportPlayerEvent(scp, victim)); break;
+            case ScpAttackType.Scp106Corroding:
+                Damage = Scp106Attack.AttackDamage;
+                TakeToPocket = false;
+                Cooldown = scp.MainScpController.Scp106.Attack._hitCooldown;
+                VigoreReward = 0;
+                SinkholeCooldown = -Scp106Attack.CooldownReductionReward;
+                break;
+            default:
+                break;
+        }
+
     }
 
-    public Scp106AttackEvent(SynapsePlayer scp, SynapsePlayer victim, float damage, bool takeToPocket, float cooldown) : base(scp, victim, damage)
-    {
-        TakeToPocket = takeToPocket;
-        Cooldown = cooldown;
-        scp106AttackType = ScpAttackType.Scp106OldGrab;
-    }
-
-    internal ScpAttackType scp106AttackType;
-    public override ScpAttackType ScpAttackType { get => scp106AttackType; }
+    public override ScpAttackType ScpAttackType { get; }
     
     public bool TakeToPocket { get; set; }
     
     public float Cooldown { get; set; }
 
+    public float SinkholeCooldown { get; set; }
+
     public float VigoreReward { get; set; }
+}
+
+public class Scp106MissAttackEvent : ScpActionEvent
+{
+    public Scp106MissAttackEvent(SynapsePlayer scp, float cooldown) : base(scp, true) 
+    {
+        Cooldown = cooldown;
+        IgnoreMiss = false;
+    }
+
+    public float Cooldown { get; set; } 
+
+    public bool IgnoreMiss { get; set; }
 }
 
 public class Scp173ObserveEvent : PlayerInteractEvent

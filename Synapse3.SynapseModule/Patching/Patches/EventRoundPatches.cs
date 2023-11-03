@@ -127,7 +127,7 @@ public static class FirstSpawnPatch
             HumanSpawner.SpawnHumans(ev.HumanQueue, ev.HumanQueue.Length);
             foreach (var hub in ReferenceHub.AllHubs.Where(hub => hub.IsAlive()))
             {
-                RoleAssigner.AlreadySpawnedPlayers.Add(hub.characterClassManager.UserId);
+                RoleAssigner.AlreadySpawnedPlayers.Add(hub.authManager.UserId);
             }
             _blockedPlayer.Clear();
             return false;

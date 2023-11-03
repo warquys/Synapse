@@ -650,6 +650,7 @@ public static class PlayerDeathPatch
             var damage = (handler as StandardDamageHandler)?.Damage ?? 0;
             var victim = __instance.GetSynapsePlayer();
             var attacker = (handler as AttackerDamageHandler)?.Attacker.GetSynapsePlayer();
+            //(handler as AttackerDamageHandler).Hitbox TODO
             var damageType = handler.GetDamageType();
 
             if (damageType == DamageType.PocketDecay)
@@ -880,7 +881,7 @@ public static class PlayerBanPatch
                 return true;
             }
 
-            if (target.serverRoles.BypassStaff) return false;
+            if (target.serverRoles.BypassMode) return false;
             var player = target.GetSynapsePlayer();
             var admin = (issuer as CommandSender)?.GetSynapsePlayer();
             if (player == null || admin == null) return true;

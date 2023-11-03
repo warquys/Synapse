@@ -1,6 +1,8 @@
-﻿using Synapse3.SynapseModule.Enums;
+﻿using GameCore;
+using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Permissions;
 using VoiceChat;
+using static ServerRoles;
 
 namespace Synapse3.SynapseModule.Player;
 
@@ -15,9 +17,9 @@ public partial class SynapsePlayer
         set
         {
             if (value)
-                ClassManager.CmdRequestHideTag();
+                ServerRoles.TryHideTag();
             else
-                ClassManager.UserCode_CmdRequestShowTag__Boolean(false);
+                ServerRoles.RefreshLocalTag();
         }
     }
 
@@ -66,11 +68,10 @@ public partial class SynapsePlayer
     public void RaLogin()
     {
         ServerRoles.RemoteAdmin = true;
-        ServerRoles.Permissions = SynapseGroup.GetVanillaPermissionValue() | ServerRoles._globalPerms;
-        ServerRoles.RemoteAdminMode = GlobalRemoteAdmin ? ServerRoles.AccessMode.GlobalAccess : ServerRoles.AccessMode.PasswordOverride;
+        ServerRoles.Permissions = SynapseGroup.GetVanillaPermissionValue() | ServerRoles.GlobalPerms;
         if (!ServerRoles.AdminChatPerms)
             ServerRoles.AdminChatPerms = SynapseGroup.HasVanillaPermission(PlayerPermissions.AdminChat);
-        ServerRoles.TargetOpenRemoteAdmin(false);
+        ServerRoles.TargetSetRemoteAdmin(true);
         QueryProcessor.SyncCommandsToClient();
     }
 
@@ -80,8 +81,7 @@ public partial class SynapsePlayer
     public void RaLogout()
     {
         Hub.serverRoles.RemoteAdmin = false;
-        Hub.serverRoles.RemoteAdminMode = ServerRoles.AccessMode.LocalAccess;
-        Hub.serverRoles.TargetCloseRemoteAdmin();
+        Hub.serverRoles.TargetSetRemoteAdmin(false);
     }
 
     /// <summary>
@@ -95,9 +95,10 @@ public partial class SynapsePlayer
     /// <summary>
     /// Reloads the Permissions of the Player
     /// </summary>
-    /// <param name="disp"></param>
-    public void RefreshPermission(bool disp)
+    /// <param name="hideBadage"></param>
+    public void RefreshPermission(bool hideBadage) //TODO: CHECK THIS
     {
+        SynapseLogger<SynapsePlayer>.Info("1");
         var group = new UserGroup
         {
             BadgeText = SynapseGroup.Badge.ToUpper() == "NONE" ? null : SynapseGroup.Badge,
@@ -109,54 +110,55 @@ public partial class SynapsePlayer
             RequiredKickPower = SynapseGroup.RequiredKickPower,
             Shared = false
         };
+        SynapseLogger<SynapsePlayer>.Info("2");
 
-        var globalAccessAllowed = true;
-        switch (ServerRoles.GlobalBadgeType)
-        {
-            case 1:
-                globalAccessAllowed = _config.PermissionConfiguration.StaffAccess;
-                break;
-            case 2:
-                globalAccessAllowed = _config.PermissionConfiguration.ManagerAccess;
-                break;
-            case 3:
-                globalAccessAllowed = _config.PermissionConfiguration.GlobalBanTeamAccess;
-                break;
-            case 4:
-                globalAccessAllowed = _config.PermissionConfiguration.GlobalBanTeamAccess;
-                break;
-        }
+        var globalAccessAllowed = false;
+        var badge = AuthenticationManager.AuthenticationResponse.BadgeToken;
+        if (badge.Staff)
+            globalAccessAllowed = _config.PermissionConfiguration.StaffAccess;
+        if (!globalAccessAllowed && badge.Management)
+            globalAccessAllowed = _config.PermissionConfiguration.ManagerAccess;
+        if (!globalAccessAllowed && badge.GlobalBanning)
+            globalAccessAllowed = _config.PermissionConfiguration.GlobalBanTeamAccess;
 
         if (GlobalPerms != 0 && globalAccessAllowed)
             group.Permissions |= GlobalPerms;
+        SynapseLogger<SynapsePlayer>.Info("3");
 
         ServerRoles.Group = group;
         ServerRoles.Permissions = group.Permissions;
         RemoteAdminAccess = SynapseGroup.RemoteAdmin || GlobalRemoteAdmin;
         ServerRoles.AdminChatPerms = PermissionsHandler.IsPermitted(group.Permissions, PlayerPermissions.AdminChat);
-        ServerRoles._badgeCover = group.Cover;
+        ServerRoles.BadgeCover = group.Cover;
         QueryProcessor.GameplayData = PermissionsHandler.IsPermitted(group.Permissions, PlayerPermissions.GameplayData);
 
         if (PlayerType == PlayerType.Player)
             ServerRoles.SendRealIds();
+        SynapseLogger<SynapsePlayer>.Info("4");
 
         if (string.IsNullOrEmpty(group.BadgeText))
         {
             ServerRoles.SetColor(null);
             ServerRoles.SetText(null);
-            if (!string.IsNullOrEmpty(ServerRoles.PrevBadge))
+            if (!string.IsNullOrEmpty(ServerRoles._prevBadge))
             {
-                ServerRoles.HiddenBadge = ServerRoles.PrevBadge;
+                ServerRoles.HiddenBadge = ServerRoles._prevBadge;
                 ServerRoles.GlobalHidden = true;
                 ServerRoles.RefreshHiddenTag();
             }
         }
         else
         {
-            if (ServerRoles._hideLocalBadge || (group.HiddenByDefault && !disp && !ServerRoles._neverHideLocalBadge))
+            var playerPreferences = ServerRoles._localBadgeVisibilityPreferences;
+            if (playerPreferences == ServerRoles.BadgeVisibilityPreferences.Hidden
+                || (group.HiddenByDefault && !hideBadage && playerPreferences == ServerRoles.BadgeVisibilityPreferences.NoPreference))
             {
-                ServerRoles.Network_myText = null;
-                ServerRoles.Network_myColor = "default";
+                ServerRoles.BadgeCover = ServerRoles.UserBadgePreferences == BadgePreferences.PreferLocal;
+                if (!string.IsNullOrEmpty(ServerRoles.MyText))
+                    return;
+                ServerRoles.SetText(null);
+                ServerRoles.SetColor("default");
+                ServerRoles.GlobalHidden = false;
                 ServerRoles.HiddenBadge = group.BadgeText;
                 ServerRoles.RefreshHiddenTag();
                 ServerRoles.TargetSetHiddenRole(Connection, group.BadgeText);
@@ -164,35 +166,40 @@ public partial class SynapsePlayer
             else
             {
                 ServerRoles.HiddenBadge = null;
+                ServerRoles.GlobalHidden = false;
                 ServerRoles.RpcResetFixed();
-                ServerRoles.Network_myText = group.BadgeText;
-                ServerRoles.Network_myColor = group.BadgeColor;
+                ServerRoles.SetText(group.BadgeText);
+                ServerRoles.SetColor(group.BadgeColor);
             }
         }
 
-        var flag = ServerRoles.Staff ||
+        SynapseLogger<SynapsePlayer>.Info("5");
+
+        var localBadge = badge.Staff ||
                    PermissionsHandler.IsPermitted(group.Permissions, PlayerPermissions.ViewHiddenBadges);
-        var flag2 = ServerRoles.Staff ||
+        var globalBadge = badge.Staff ||
                     PermissionsHandler.IsPermitted(group.Permissions, PlayerPermissions.ViewHiddenGlobalBadges);
 
-        if (flag || flag2)
+        if (localBadge || globalBadge)
             foreach (var player in _player.Players)
             {
                 if (!string.IsNullOrEmpty(player.ServerRoles.HiddenBadge) &&
-                    (!player.ServerRoles.GlobalHidden || flag2) && (player.ServerRoles.GlobalHidden || flag))
+                    (!player.ServerRoles.GlobalHidden || globalBadge) && (player.ServerRoles.GlobalHidden || localBadge))
                     player.ServerRoles.TargetSetHiddenRole(Connection, player.ServerRoles.HiddenBadge);
             }
+        SynapseLogger<SynapsePlayer>.Info("Remove the log!");
+
     }
-    
+
     /// <summary>
     /// If the Player has Globally Permissions for RemoteAdmin
     /// </summary>
-    public bool GlobalRemoteAdmin => ServerRoles.RemoteAdminMode == ServerRoles.AccessMode.GlobalAccess;
+    public bool GlobalRemoteAdmin => AuthenticationManager.RemoteAdminGlobalAccess;
     
     /// <summary>
     /// The Global Permissions of the Player
     /// </summary>
-    public ulong GlobalPerms => ServerRoles._globalPerms;
+    public ulong GlobalPerms => ServerRoles.GlobalPerms;
 
     /// <summary>
     /// The vanilla group of the player

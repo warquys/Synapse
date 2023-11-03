@@ -27,7 +27,7 @@ public class RoleService : Service
     /// <summary>
     /// The Hightest vanilla number for Roles
     /// </summary>
-    public const uint HighestRole = (uint)RoleTypeId.Filmmaker;
+    public const uint HighestRole = (uint)RoleTypeId.Scp3114;
 
     /// <summary>
     /// A list of all Registered CustomRoles that can spawn

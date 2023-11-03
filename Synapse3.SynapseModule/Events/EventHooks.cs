@@ -1,5 +1,6 @@
 using LightContainmentZoneDecontamination;
 using LiteNetLib;
+using PlayerRoles.Ragdolls;
 using PlayerStatsSystem;
 using PluginAPI.Core.Attributes;
 using PluginAPI.Core.Interfaces;

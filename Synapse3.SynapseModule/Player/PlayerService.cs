@@ -255,7 +255,7 @@ public class PlayerService : Service
                 case "GLOBALSTAFF":
                     foreach (var player in all)
                     {
-                        if (player.ServerRoles.Staff)
+                        if (player.AuthenticationManager.NorthwoodStaff)
                             players.Add(player);
                     }
                     break;

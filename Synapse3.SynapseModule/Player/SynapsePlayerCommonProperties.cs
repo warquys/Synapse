@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Data;
+using System.Linq;
 using System.Reflection;
 using GameCore;
 using InventorySystem.Disarming;
@@ -8,6 +9,7 @@ using PlayerRoles.FirstPersonControl;
 using PlayerRoles.Spectating;
 using PlayerStatsSystem;
 using RelativePositioning;
+using Respawning.NamingRules;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Teams;
@@ -50,20 +52,19 @@ public partial class SynapsePlayer
     /// </summary>
     public string UserId
     {
-        get => ClassManager.UserId;
-        set => ClassManager.UserId = value;
+        get => AuthenticationManager.UserId;
+        set => AuthenticationManager.UserId = value;
     }
 
     public uint NetId => NetworkIdentity.netId;
 
     /// <summary>
-    /// A potentially second id of the User.It is most often used when a custom ID is present like 1234@patreon
+    /// A potentially second id of the User.
+    /// Formerly used by NW, it has been removed. 
+    /// Synapse keeps it to allow the plugin to manage on their side a personalized ID which can be used by the server staff. 
+    /// However, it must be finalized by the plugin/module.
     /// </summary>
-    public string SecondUserID
-    {
-        get => ClassManager.UserId2;
-        set => ClassManager.UserId2 = value;
-    }
+    public string SecondUserID { get; set; }
     
     /// <summary>
     /// When Enabled the Player can fly through walls
@@ -231,7 +232,15 @@ public partial class SynapsePlayer
         }
     }
 
-    public string UnitName => (CurrentRole as HumanRole)?.UnitName ?? "";
+    public string UnitName
+    {
+        get
+        {
+            if (CurrentRole is not HumanRole humanRole)
+                return "";
+            return UnitNameMessageHandler.GetReceived(humanRole.AssignedSpawnableTeam, humanRole.UnitNameId);
+        }
+    }
 
     public byte UnitNameId
     {
@@ -284,7 +293,7 @@ public partial class SynapsePlayer
     /// <summary>
     /// True if the player has DoNotTrack enabled (https://scpslgame.com/Verified_server_rules.pdf [8.11])
     /// </summary>
-    public bool DoNotTrack => ServerRoles.DoNotTrack;
+    public bool DoNotTrack => AuthenticationManager.DoNotTrack;
 
     /// <summary>
     /// True if the player is disarmed

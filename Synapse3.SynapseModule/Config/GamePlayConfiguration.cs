@@ -63,7 +63,7 @@ public class GamePlayConfiguration : IDocumentSection
     public bool AnyRoleCuffedJoinEnemy { get; set; } = true;
     public bool GuardEscape { get; set; } = true;
 
-    [Description("If enabled 106 can caputure like beffor 1.13")]
-    public bool OldScp106Attack { get; set; } = true;
+    [Description("If enabled, 106 can caputure like beffor 1.13")]
+    public bool OldScp106Attack { get; set; } = false;
 
 }

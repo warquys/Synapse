@@ -1,4 +1,5 @@
 ﻿using System;
+using CentralAuth;
 using HarmonyLib;
 using Neuron.Core.Meta;
 using Neuron.Modules.Commands.Command;

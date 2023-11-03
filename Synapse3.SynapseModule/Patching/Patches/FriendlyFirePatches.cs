@@ -59,7 +59,7 @@ public static class FlashBangCheckPatch
             }
 
             if (playersHit > 0)
-                Hitmarker.SendHitmarker(__instance.PreviousOwner.Hub, playersHit);
+                Hitmarker.SendHitmarkerDirectly(__instance.PreviousOwner.Hub, playersHit);
 
             ExplosionUtils.ServerSpawnEffect(__instance.transform.position, __instance.Info.ItemId);
             __instance.DestroySelf();

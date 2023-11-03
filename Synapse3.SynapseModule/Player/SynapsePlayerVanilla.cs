@@ -1,4 +1,5 @@
-﻿using CustomPlayerEffects;
+﻿using CentralAuth;
+using CustomPlayerEffects;
 using Hints;
 using InventorySystem;
 using InventorySystem.Searching;
@@ -22,7 +23,9 @@ public partial class SynapsePlayer
     
     public NetworkIdentity NetworkIdentity => Hub.networkIdentity;
 
-    public NetworkConnection Connection => ClassManager.Connection;
+    public NetworkConnectionToClient Connection => ClassManager.connectionToClient;
+
+    public PlayerAuthenticationManager AuthenticationManager => Hub.authManager;
 
     public HintDisplay HintDisplay => Hub.hints;
 

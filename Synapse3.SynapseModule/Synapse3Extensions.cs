@@ -19,6 +19,7 @@ using Neuron.Modules.Configs.Localization;
 using PlayerRoles;
 using PlayerRoles.PlayableScps.Scp079.Cameras;
 using PlayerRoles.PlayableScps.Subroutines;
+using PlayerRoles.Ragdolls;
 using PlayerStatsSystem;
 using PluginAPI.Core.Interfaces;
 using Synapse3.SynapseModule;

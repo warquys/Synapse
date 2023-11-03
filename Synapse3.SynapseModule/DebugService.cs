@@ -142,7 +142,7 @@ public class DebugService : Service
     
     private void OnKeyPress(KeyPressEvent ev)
     {
-
+        //Check if dummy work
         switch (ev.KeyCode)
         {
             case KeyCode.Alpha1:

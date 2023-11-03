@@ -4,9 +4,7 @@ public enum ScpAttackType
 {
     Scp173Snap,
     Scp173Tp,
-    Scp106Miss,
     Scp106OldGrab,
-    Scp106Hurt,
     Scp106Termination,
     Scp106NewGrab,
     Scp106Corroding,

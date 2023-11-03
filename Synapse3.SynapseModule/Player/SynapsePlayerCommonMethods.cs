@@ -47,7 +47,7 @@ public partial class SynapsePlayer
     /// <summary>
     /// Opens the Window that is usually used for Reports with a Custom Message
     /// </summary>
-    public virtual void SendWindowMessage(string text) => GameConsoleTransmission.SendToClient(Connection, "[REPORTING] " + text, "white");
+    public virtual void SendWindowMessage(string text) => GameConsoleTransmission.SendToClient("[REPORTING] " + text, "white");
     
     /// <summary>
     /// Displays a hint on the Player's screen, that override the hint list!
@@ -103,7 +103,7 @@ public partial class SynapsePlayer
     /// <summary>
     /// Sends a Message to the Player in his Console
     /// </summary>
-    public void SendConsoleMessage(string message, string color = "red") => ClassManager.ConsolePrint(message, color);
+    public void SendConsoleMessage(string message, string color = "red") => GameConsoleTransmission.SendToClient(message, color);
 
     /// <summary>
     /// Sends a Message to the Player in his (Text)RemoteAdmin

@@ -31,7 +31,6 @@ public partial class ItemEvents : Service
     {
         _eventManager = eventManager;
         _synapse = synapse;
-        float
     }
 
     public override void Enable()

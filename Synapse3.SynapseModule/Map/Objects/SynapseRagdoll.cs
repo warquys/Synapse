@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Mirror;
 using PlayerRoles;
+using PlayerRoles.Ragdolls;
 using PlayerStatsSystem;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Map.Schematic;

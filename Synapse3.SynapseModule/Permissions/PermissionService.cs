@@ -172,7 +172,7 @@ public class PermissionService : Service
 
         var nwGroup = GetNorthwoodGroup();
 
-        if (player.ServerRoles.Staff && nwGroup != null)
+        if (player.AuthenticationManager.NorthwoodStaff && nwGroup != null)
             return nwGroup;
 
         return GetDefaultGroup();

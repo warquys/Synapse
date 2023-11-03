@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using CentralAuth;
 using HarmonyLib;
 using Neuron.Core.Logging;
 using Neuron.Core.Meta;
@@ -60,7 +61,7 @@ public static class RemoteAdminListPatch
             var viewHiddenBadges = CommandProcessor.CheckPermissions(sender, PlayerPermissions.ViewHiddenBadges);
             var viewGlobalBadges = CommandProcessor.CheckPermissions(sender, PlayerPermissions.ViewHiddenGlobalBadges);
 
-            if (sender is PlayerCommandSender playerSender && playerSender.ServerRoles.Staff)
+            if (sender is PlayerCommandSender playerSender && playerSender.ReferenceHub.authManager.NorthwoodStaff)
             {
                 viewHiddenBadges = true;
                 viewGlobalBadges = true;
@@ -83,7 +84,7 @@ public static class RemoteAdminListPatch
                 };
                 players.Add(element);
 
-                var badgeText = __instance.GetPrefix(hub, viewHiddenBadges, viewGlobalBadges);
+                var badgeText = RaPlayerList.GetPrefix(hub, viewHiddenBadges, viewGlobalBadges);
                 var overWatchText = player.OverWatch ? RaPlayerList.OverwatchBadge : string.Empty;
 
                 element.Text = badgeText + overWatchText + "<color={RA_ClassColor}>(" +
@@ -298,8 +299,9 @@ public static class RemoteAdminPlayerDataRequestPatch
             var requestSensitiveData = number == 0;
             var playerSender = sender as PlayerCommandSender;
 
-            if (requestSensitiveData && playerSender != null &&
-                !playerSender.ServerRoles.Staff &&
+            if (requestSensitiveData &&
+                playerSender != null &&
+                !playerSender.ReferenceHub.authManager.BypassBansFlagSet &&
                 !CommandProcessor.CheckPermissions(sender, PlayerPermissions.PlayerSensitiveDataAccess)) return false;
 
             var players =
@@ -308,7 +310,7 @@ public static class RemoteAdminPlayerDataRequestPatch
 
             var allowedToSeeUserIds = PermissionsHandler.IsPermitted(sender.Permissions, 18007046UL) ||
                                       playerSender != null &&
-                                      (playerSender.ServerRoles.Staff || playerSender.ServerRoles.RaEverywhere);
+                                      playerSender.ReferenceHub.authManager.NorthwoodStaff;
 
             if (players.Count > 1)
             {
@@ -339,7 +341,7 @@ public static class RemoteAdminPlayerDataRequestPatch
 
                     if (allowedToSeeUserIds)
                     {
-                        userIds += hub.characterClassManager.UserId + ".";
+                        userIds += hub.authManager.UserId + ".";
                     }
                 }
 
@@ -363,14 +365,14 @@ public static class RemoteAdminPlayerDataRequestPatch
             }
 
             var seeGamePlayData = PermissionsHandler.IsPermitted(sender.Permissions, PlayerPermissions.GameplayData);
-            var player = players[0];
-            var connection = player.networkIdentity.connectionToClient;
+            var player = players[0].GetSynapsePlayer();
+            var connection = player.Connection;
 
             if (playerSender != null)
                 playerSender.ReferenceHub.queryProcessor.GameplayData = seeGamePlayData;
 
             var message = "<color=white>";
-            message += "Nickname: " + player.nicknameSync.CombinedName;
+            message += "Nickname: " + player.NicknameSync.CombinedName;
             message += $"\nPlayer ID: {player.PlayerId} <color=green><link=CP_ID></link></color>";
             RaClipboard.Send(sender, RaClipboard.RaClipBoardType.PlayerId, player.PlayerId.ToString());
 
@@ -381,7 +383,7 @@ public static class RemoteAdminPlayerDataRequestPatch
             else if (requestSensitiveData)
             {
                 message += "\nIP Address: " + connection.address + " ";
-                if (connection.IpOverride != null)
+                if (connection. IpOverride != null)
                 {
                     RaClipboard.Send(sender, RaClipboard.RaClipBoardType.Ip, connection.OriginalIpAddress ?? "");
                     message += " [routed via " + connection.OriginalIpAddress + "]";
@@ -398,57 +400,52 @@ public static class RemoteAdminPlayerDataRequestPatch
                 message += "\nIP Address: [REDACTED]";
             }
 
-            var id = string.IsNullOrWhiteSpace(player.characterClassManager.UserId)
+            var id = string.IsNullOrWhiteSpace(player.UserId)
                 ? "(none)"
-                : player.characterClassManager.UserId + " <color=green><link=CP_USERID></link></color>";
+                : player.UserId + " <color=green><link=CP_USERID></link></color>";
 
 
             message += "\nUser ID: " + (allowedToSeeUserIds ? id : "<color=#D4AF37>INSUFFICIENT PERMISSIONS</color>");
 
             if (allowedToSeeUserIds)
             {
-                RaClipboard.Send(sender, RaClipboard.RaClipBoardType.UserId, player.characterClassManager.UserId ?? "");
-                if (player.characterClassManager.SaltedUserId != null &&
-                    player.characterClassManager.SaltedUserId.Contains("$"))
+                RaClipboard.Send(sender, RaClipboard.RaClipBoardType.UserId, player.UserId ?? "");
+                if (player.AuthenticationManager.SaltedUserId != null &&
+                    player.AuthenticationManager.SaltedUserId.Contains("$"))
                 {
-                    message += "\nSalted User ID: " + player.characterClassManager.SaltedUserId;
+                    message += "\nSalted User ID: " + player.AuthenticationManager.SaltedUserId;
                 }
 
-                if (!string.IsNullOrWhiteSpace(player.characterClassManager.UserId2))
+                if (!string.IsNullOrWhiteSpace(player.SecondUserID))
                 {
-                    message += "\nUser ID 2: " + player.characterClassManager.UserId2;
+                    message += "\nUser ID 2: " + player.SecondUserID;
                 }
             }
 
-            message += "\nServer role: " + player.serverRoles.GetColoredRoleString();
+            message += "\nServer role: " + player.ServerRoles.GetColoredRoleString();
             var seeHidden = CommandProcessor.CheckPermissions(sender, PlayerPermissions.ViewHiddenBadges);
             var seeGlobal = CommandProcessor.CheckPermissions(sender, PlayerPermissions.ViewHiddenGlobalBadges);
 
-            if (playerSender != null && playerSender.ServerRoles.Staff)
+            if (playerSender != null && playerSender.ReferenceHub.authManager.NorthwoodStaff)
             {
                 seeHidden = true;
                 seeGlobal = true;
             }
 
-            var hasHiddenBadge = !string.IsNullOrWhiteSpace(player.serverRoles.HiddenBadge);
-            var isAllowedToSee = !hasHiddenBadge || (player.serverRoles.GlobalHidden && seeGlobal) ||
-                                 (!player.serverRoles.GlobalHidden && seeHidden);
+            var hasHiddenBadge = !string.IsNullOrWhiteSpace(player.ServerRoles.HiddenBadge);
+            var isAllowedToSee = !hasHiddenBadge || (player.ServerRoles.GlobalHidden && seeGlobal) ||
+                                 (!player.ServerRoles.GlobalHidden && seeHidden);
 
             if (isAllowedToSee)
             {
                 if (hasHiddenBadge)
                 {
-                    message += "\n<color=#DC143C>Hidden role: </color>" + player.serverRoles.HiddenBadge;
+                    message += "\n<color=#DC143C>Hidden role: </color>" + player.ServerRoles.HiddenBadge;
                     message += "\n<color=#DC143C>Hidden role type: </color>" +
-                               (player.serverRoles.GlobalHidden ? "GLOBAL" : "LOCAL");
+                               (player.ServerRoles.GlobalHidden ? "GLOBAL" : "LOCAL");
                 }
 
-                if (player.serverRoles.RaEverywhere)
-                {
-                    message +=
-                        "\nStudio Status: <color=#BCC6CC>Studio GLOBAL Staff (management or global moderation)</color>";
-                }
-                else if (player.serverRoles.Staff)
+                if (player.AuthenticationManager.NorthwoodStaff)
                 {
                     message += "\nStudio Status: <color=#94B9CF>Studio Staff</color>";
                 }
@@ -473,12 +470,12 @@ public static class RemoteAdminPlayerDataRequestPatch
 
             message += "\nActive flag(s):";
 
-            if (player.characterClassManager.GodMode)
+            if (player.GodMode)
             {
                 message += " <color=#659EC7>[GOD MODE]</color>";
             }
 
-            if (player.playerStats.GetModule<AdminFlagsStat>().HasFlag(AdminFlags.Noclip))
+            if (player.PlayerStats.GetModule<AdminFlagsStat>().HasFlag(AdminFlags.Noclip))
             {
                 message += " <color=#DC143C>[NOCLIP ENABLED]</color>";
             }
@@ -487,22 +484,22 @@ public static class RemoteAdminPlayerDataRequestPatch
                 message += " <color=#E52B50>[NOCLIP UNLOCKED]</color>";
             }
 
-            if (player.serverRoles.DoNotTrack)
+            if (player.AuthenticationManager.DoNotTrack)
             {
                 message += " <color=#BFFF00>[DO NOT TRACK]</color>";
             }
 
-            if (player.serverRoles.BypassMode)
+            if (player.Bypass)
             {
                 message += " <color=#BFFF00>[BYPASS MODE]</color>";
             }
 
-            if (isAllowedToSee && player.serverRoles.RemoteAdmin)
+            if (isAllowedToSee && player.ServerRoles.RemoteAdmin)
             {
                 message += " <color=#43C6DB>[RA AUTHENTICATED]</color>";
             }
 
-            if (player.serverRoles.IsInOverwatch)
+            if (player.ServerRoles.IsInOverwatch)
             {
                 message += " <color=#008080>[OVERWATCH MODE]</color>";
             }
@@ -548,9 +545,9 @@ public static class RemoteAdminPlayerDataRequestPatch
             message += "</color>";
             sender.RaReply("$1 " + message, true, true, string.Empty);
             RaPlayerQR.Send(sender, false,
-                string.IsNullOrWhiteSpace(player.characterClassManager.UserId)
+                string.IsNullOrWhiteSpace(player.AuthenticationManager.UserId)
                     ? "(no User ID)"
-                    : player.characterClassManager.UserId);
+                    : player.AuthenticationManager.UserId);
             return false;
         }
         catch (Exception ex)

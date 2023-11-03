@@ -1,4 +1,5 @@
-﻿using InventorySystem.Items;
+﻿using CentralAuth;
+using InventorySystem.Items;
 using MEC;
 using Mirror;
 using PlayerRoles;
@@ -183,7 +184,7 @@ public class SynapseDummy : DefaultSynapseObject, IRefreshable
         Player.RankName = badge;
         Player.RankColor = badgeColor;
         Player.Position = position;
-        Player.Hub.characterClassManager.InstanceMode = ClientInstanceMode.Unverified;
+        Player.Hub.authManager.InstanceMode = ClientInstanceMode.Unverified;
 
         if (Player.ExistsInSpace)
         {

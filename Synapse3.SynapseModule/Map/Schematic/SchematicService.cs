@@ -15,6 +15,7 @@ using Neuron.Core.Logging;
 using Neuron.Core.Meta;
 using Neuron.Modules.Configs;
 using PlayerRoles;
+using PlayerRoles.Ragdolls;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Map.Objects;
 using UnityEngine;
