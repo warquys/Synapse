@@ -1,4 +1,5 @@
-﻿using GameCore;
+﻿using System.Net;
+using GameCore;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Permissions;
 using VoiceChat;
@@ -98,7 +99,6 @@ public partial class SynapsePlayer
     /// <param name="hideBadage"></param>
     public void RefreshPermission(bool hideBadage) //TODO: CHECK THIS
     {
-        SynapseLogger<SynapsePlayer>.Info("1");
         var group = new UserGroup
         {
             BadgeText = SynapseGroup.Badge.ToUpper() == "NONE" ? null : SynapseGroup.Badge,
@@ -110,20 +110,21 @@ public partial class SynapsePlayer
             RequiredKickPower = SynapseGroup.RequiredKickPower,
             Shared = false
         };
-        SynapseLogger<SynapsePlayer>.Info("2");
 
         var globalAccessAllowed = false;
         var badge = AuthenticationManager.AuthenticationResponse.BadgeToken;
-        if (badge.Staff)
-            globalAccessAllowed = _config.PermissionConfiguration.StaffAccess;
-        if (!globalAccessAllowed && badge.Management)
-            globalAccessAllowed = _config.PermissionConfiguration.ManagerAccess;
-        if (!globalAccessAllowed && badge.GlobalBanning)
-            globalAccessAllowed = _config.PermissionConfiguration.GlobalBanTeamAccess;
+        if (badge != null)
+        {
+            if (badge.Staff)
+                globalAccessAllowed = _config.PermissionConfiguration.StaffAccess;
+            if (!globalAccessAllowed && badge.Management)
+                globalAccessAllowed = _config.PermissionConfiguration.ManagerAccess;
+            if (!globalAccessAllowed && badge.GlobalBanning)
+                globalAccessAllowed = _config.PermissionConfiguration.GlobalBanTeamAccess;
 
-        if (GlobalPerms != 0 && globalAccessAllowed)
-            group.Permissions |= GlobalPerms;
-        SynapseLogger<SynapsePlayer>.Info("3");
+            if (GlobalPerms != 0 && globalAccessAllowed)
+                group.Permissions |= GlobalPerms;
+        }
 
         ServerRoles.Group = group;
         ServerRoles.Permissions = group.Permissions;
@@ -134,7 +135,6 @@ public partial class SynapsePlayer
 
         if (PlayerType == PlayerType.Player)
             ServerRoles.SendRealIds();
-        SynapseLogger<SynapsePlayer>.Info("4");
 
         if (string.IsNullOrEmpty(group.BadgeText))
         {
@@ -173,11 +173,10 @@ public partial class SynapsePlayer
             }
         }
 
-        SynapseLogger<SynapsePlayer>.Info("5");
-
-        var localBadge = badge.Staff ||
+        var nwStaff = badge?.Staff ?? false;
+        var localBadge = nwStaff ||
                    PermissionsHandler.IsPermitted(group.Permissions, PlayerPermissions.ViewHiddenBadges);
-        var globalBadge = badge.Staff ||
+        var globalBadge = nwStaff ||
                     PermissionsHandler.IsPermitted(group.Permissions, PlayerPermissions.ViewHiddenGlobalBadges);
 
         if (localBadge || globalBadge)
@@ -187,8 +186,6 @@ public partial class SynapsePlayer
                     (!player.ServerRoles.GlobalHidden || globalBadge) && (player.ServerRoles.GlobalHidden || localBadge))
                     player.ServerRoles.TargetSetHiddenRole(Connection, player.ServerRoles.HiddenBadge);
             }
-        SynapseLogger<SynapsePlayer>.Info("Remove the log!");
-
     }
 
     /// <summary>
