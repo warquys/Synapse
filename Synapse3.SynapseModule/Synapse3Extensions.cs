@@ -20,6 +20,7 @@ using PlayerRoles;
 using PlayerRoles.PlayableScps.Scp079.Cameras;
 using PlayerRoles.PlayableScps.Subroutines;
 using PlayerRoles.Ragdolls;
+using PlayerRoles.Subroutines;
 using PlayerStatsSystem;
 using PluginAPI.Core.Interfaces;
 using Synapse3.SynapseModule;
@@ -170,7 +171,7 @@ public static class Synapse3Extensions
     public static SynapsePlayer GetSynapsePlayer(this Footprint footprint) => footprint.Hub?.GetSynapsePlayer();
     public static SynapsePlayer GetSynapsePlayer(this PluginAPI.Core.Player player) => player?.ReferenceHub?.GetSynapsePlayer();
     
-    public static SynapsePlayer GetSynapsePlayer<TScpRole>(this ScpStandardSubroutine<TScpRole> role)
+    public static SynapsePlayer GetSynapsePlayer<TScpRole>(this StandardSubroutine<TScpRole> role)
         where TScpRole : PlayerRoleBase
         => role.Owner.GetSynapsePlayer();
 
@@ -465,7 +466,7 @@ public static class Synapse3Extensions
         }
     }
 
-    public static T GetSubroutine<T>(this ISubroutinedScpRole role) where T : ScpSubroutineBase
+    public static T GetSubroutine<T>(this ISubroutinedRole role) where T : SubroutineBase
         => role.SubroutineModule.AllSubroutines.FirstOrDefault(p => p is T) as T;
 
     public static CoroutineHandle RunSafelyCoroutine(this IEnumerator<float> coroutine) =>

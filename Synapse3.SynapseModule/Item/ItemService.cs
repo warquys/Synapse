@@ -11,7 +11,8 @@ namespace Synapse3.SynapseModule.Item;
 
 public class ItemService : Service
 {
-    public const int HighestItem = (int)ItemType.Marshmallow;
+    // TODO: Maby change const like this one to not const varaible
+    public const int HighestItem = (int)ItemType.Lantern;
     
     private readonly RoundEvents _round;
     private readonly Synapse _synapseModule;

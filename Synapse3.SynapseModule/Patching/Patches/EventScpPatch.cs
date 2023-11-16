@@ -264,7 +264,7 @@ public static class Scp079DoorLockPatch
                     return false;
                 __instance.LockedDoor = __instance.LastDoor;
                 __instance.RewardManager.MarkRooms(__instance.LastDoor.Rooms);
-                InvokeOnServerDoorLocked(__instance.ScpRole, __instance.LastDoor);
+                InvokeOnServerDoorLocked(__instance.CastRole, __instance.LastDoor);
                 __instance.AuxManager.CurrentAux -= cost;
             }
             else if (__instance.LastDoor == __instance.LockedDoor)
@@ -331,7 +331,7 @@ public static class Scp079DoorInteractPatch
             if (targetState == __instance.LastDoor.TargetState) return false;
             __instance.RewardManager.MarkRooms(__instance.LastDoor.Rooms);
             Synapse3Extensions.RaiseEvent(typeof(Scp079DoorStateChanger),
-                nameof(Scp079DoorStateChanger.OnServerDoorToggled), __instance.ScpRole, __instance.LastDoor);
+                nameof(Scp079DoorStateChanger.OnServerDoorToggled), __instance.CastRole, __instance.LastDoor);
             __instance.AuxManager.CurrentAux -= cost;
             __instance.ServerSendRpc(toAll: false);
             return false;
@@ -680,7 +680,7 @@ public static class Scp079ElevatorInteractPatch
             if (targetState)
             {
                 Synapse3Extensions.RaiseEvent(typeof(Scp079ElevatorStateChanger),
-                    nameof(Scp079ElevatorStateChanger.OnServerElevatorDoorClosed), __instance.ScpRole, door);
+                    nameof(Scp079ElevatorStateChanger.OnServerElevatorDoorClosed), __instance.CastRole, door);
             }
 
             return false;
@@ -1012,7 +1012,7 @@ public static class Scp173AttackSnapPatch
 
             var scpCameraReference = __instance.Owner.PlayerCameraReference;
 
-            var scpFpcModule = __instance.ScpRole.FpcModule;
+            var scpFpcModule = __instance.CastRole.FpcModule;
             var victimFpcModule = currentRole.FpcModule;
 
             var victimPosition = victimFpcModule.Position;
@@ -1040,7 +1040,7 @@ public static class Scp173AttackSnapPatch
                     if (target.playerStats.DealDamage(damageHandler))
                     {
                         Hitmarker.SendHitmarkerDirectly(__instance.Owner, 1f);
-                        if (__instance.ScpRole.SubroutineModule.TryGetSubroutine<Scp173AudioPlayer>(out var subroutine))
+                        if (__instance.CastRole.SubroutineModule.TryGetSubroutine<Scp173AudioPlayer>(out var subroutine))
                         {
                             subroutine.ServerSendSound(Scp173AudioPlayer.Scp173SoundId.Snap);
                         }
@@ -1111,7 +1111,7 @@ public static class Scp173AttackTpPatch
             {
                 if (DetectedColliders[i].TryGetComponent<BreakableWindow>(out var component))
                 {
-                    component.Damage(component.health, __instance.ScpRole.DamageHandler, Vector3.zero);
+                    component.Damage(component.health, __instance.CastRole.DamageHandler, Vector3.zero);
                 }
             }
 
@@ -1135,7 +1135,7 @@ public static class Scp173AttackTpPatch
             if (!targetHub.playerStats.DealDamage(new ScpDamageHandler(scp, ev.Damage, DeathTranslations.Scp173)))
                 return false;
 
-            if (!__instance.ScpRole.SubroutineModule.TryGetSubroutine<Scp173AudioPlayer>(out var audioPlayer))
+            if (!__instance.CastRole.SubroutineModule.TryGetSubroutine<Scp173AudioPlayer>(out var audioPlayer))
                 return false;
 
             Hitmarker.SendHitmarkerDirectly(__instance.Owner, 1f);
@@ -1285,11 +1285,11 @@ public static class Scp173TantrumPatch
         {
             if (!__instance.Cooldown.IsReady
                 || __instance._observersTracker.IsObserved
-                || !Physics.Raycast(__instance.ScpRole.FpcModule.Position, Vector3.down, out var hitInfo, 3f,
+                || !Physics.Raycast(__instance.CastRole.FpcModule.Position, Vector3.down, out var hitInfo, 3f,
                     __instance._tantrumMask))
                 return false;
 
-            var player = __instance.ScpRole._owner.GetSynapsePlayer();
+            var player = __instance.CastRole._owner.GetSynapsePlayer();
 
             var ev = new Scp173PlaceTantrumEvent(player, player.MainScpController.Scp173.TantrumCoolDown)
             {
