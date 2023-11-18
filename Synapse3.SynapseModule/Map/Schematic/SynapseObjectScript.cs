@@ -61,7 +61,7 @@ public class SynapseObjectScript : MonoBehaviour
             _events.Destroy.Raise(new DestroyObjectEvent(Object));
         Object.OnDestroy();
 
-        _map.ElevatorMoveContent.Subscribe(MoveElevator);
+        _map.ElevatorMoveContent.Unsubscribe(MoveElevator);
     }
 
 
@@ -74,21 +74,8 @@ public class SynapseObjectScript : MonoBehaviour
 
     private void MoveElevator(ElevatorMoveContentEvent ev)
     {
-        GameObject gameObject;
-
-        try//TODO: Find the bug
-        {
-            gameObject = Object?.GameObject;
-        }
-        catch (System.Exception _)
-        {
-            SynapseLogger<SynapseObjectScript>.Error("Elevator Error " + Object.GetType().FullName);
-            if (Object is SynapseDoor door)
-                SynapseLogger<SynapseObjectScript>.Error("Elevtor Door Error " + (door.Variant == null));
-            return; 
-        }
-        if (gameObject == null) return;
-
+        GameObject gameObject = Object.GameObject;
+       
         if (ev.CustomElevator)
         {
             Object.Position += ev.DeltaPosition;

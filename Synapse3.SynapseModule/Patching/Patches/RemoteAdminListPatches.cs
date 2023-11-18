@@ -21,6 +21,10 @@ using Utils;
 using VoiceChat;
 using Random = UnityEngine.Random;
 
+/*
+    TODO: When we request data on a default categorie, we get the perimison (config of the permsion) and the players with the role
+*/
+
 namespace Synapse3.SynapseModule.Patching.Patches;
 
 #if !PATCHLESS
@@ -154,7 +158,7 @@ public static class RemoteAdminListPatch
             }
 
             text +=
-                $"<align=center><size=0>({category.Attribute.Id})</size> <size={category.Attribute.Size}></color><color={color}>{category.Attribute.Name}</color></size>\n</align>";
+                $"<align=center><size=0>({category.Attribute.Id * -1})</size> <size={category.Attribute.Size}></color><color={color}>{category.Attribute.Name}</color></size>\n</align>";
 
             if (!config.DisplayPlayerMultipleTimes) continue;
 
