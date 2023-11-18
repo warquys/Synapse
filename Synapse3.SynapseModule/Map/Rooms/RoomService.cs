@@ -47,6 +47,7 @@ public class RoomService : Service
 
     public override void Disable()
     {
+        SynapseLogger<RoomService>.Error("Disable");
         _round.Waiting.Unsubscribe(LoadRooms);
         _round.Restart.Unsubscribe(ClearRooms);
         _player.Update.Unsubscribe(OnUpdate);
@@ -81,6 +82,8 @@ public class RoomService : Service
     {
         if (!_rooms.Contains(room))
             _rooms.Add(room);
+        if (room is SynapseCustomRoom customRoom && !_customRooms.Contains(customRoom))
+            _customRooms.Add(customRoom);
     }
 
     public void RegisterCustomRoom<TRoom>() where TRoom : SynapseCustomRoom

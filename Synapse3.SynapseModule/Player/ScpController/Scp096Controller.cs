@@ -74,7 +74,7 @@ public class Scp096Controller : ScpShieldController<Scp096Role>
     public void AddTarget(SynapsePlayer player)
     {
         var rageManager = RageManager;
-        if (rageManager != null) return;
+        if (rageManager == null) return;
 
         rageManager._targetsTracker.AddTarget(player, false);
     }
@@ -82,7 +82,7 @@ public class Scp096Controller : ScpShieldController<Scp096Role>
     public void RemoveTarget(SynapsePlayer player)
     {
         var rageManager = RageManager;
-        if (rageManager != null) return;
+        if (rageManager == null) return;
 
         RageManager._targetsTracker.RemoveTarget(player);
     }

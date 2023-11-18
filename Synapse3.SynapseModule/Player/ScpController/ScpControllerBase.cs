@@ -21,6 +21,11 @@ public abstract class ScpControllerBase<T> : IScpControllerBase
     public abstract RoleTypeId ScpRole { get; }
 }
 
+internal interface IResettableController
+{
+    void ResetDefault();
+}
+
 public interface IScpShieldController
 {
     public float CurrentShield { get; set; }
@@ -32,7 +37,7 @@ public interface IScpShieldController
     public  bool UseDefaultShieldRegeneration { get; }
 }
 
-public abstract class ScpShieldController<T> : ScpControllerBase<T>, IScpShieldController
+public abstract class ScpShieldController<T> : ScpControllerBase<T>, IScpShieldController, IResettableController
     where T : PlayerRoleBase
 {
     public HumeShieldModuleBase ShieldModule => (_player.CurrentRole as IHumeShieldedRole)?.HumeShieldModule;
@@ -73,9 +78,8 @@ public abstract class ScpShieldController<T> : ScpControllerBase<T>, IScpShieldC
             _maxShield = value;
         }
     }
-    public bool UseDefaultMaxShield => _maxShield < 0;
-    
-    
+
+    public bool UseDefaultMaxShield => _maxShield < 0;    
     
     internal float _shieldRegeneration = -1;
     /// <summary>
@@ -98,4 +102,16 @@ public abstract class ScpShieldController<T> : ScpControllerBase<T>, IScpShieldC
         }
     }
     public bool UseDefaultShieldRegeneration => _shieldRegeneration < 0;
+
+    void IResettableController.ResetDefault()
+    {
+        _shieldRegeneration = -1;
+        _maxShield = -1;
+        ResetDefault();
+    }
+
+    /// <summary>
+    /// To reset the controler at it default value, must use when changing roles.
+    /// </summary>
+    internal protected virtual void ResetDefault() { }
 }

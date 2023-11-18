@@ -1,6 +1,7 @@
 ﻿using Neuron.Core.Events;
 using Neuron.Core.Meta;
 using PlayerRoles.PlayableScps.Scp106;
+using PlayerRoles.PlayableScps.Scp3114;
 using PlayerRoles.PlayableScps.Scp939;
 using PlayerStatsSystem;
 using PluginAPI.Events;
@@ -49,6 +50,11 @@ public partial class ScpEvents : Service
 
     public readonly EventReactor<Scp939AttackEvent> Scp939Attack = new();
 
+    public readonly EventReactor<Scp3114DisguiseEvent> Scp3114Disguise = new();
+    public readonly EventReactor<Scp3114RevealEvent> Scp3114Reveal = new();
+    public readonly EventReactor<Scp3114AttackEvent> Scp3114Attack = new();
+    public readonly EventReactor<Scp3114StrangleEvent> Scp3114Strangle = new();
+
     public ScpEvents(EventManager eventManager, Synapse synapse)
     {
         _eventManager = eventManager;
@@ -86,6 +92,11 @@ public partial class ScpEvents : Service
         _eventManager.RegisterEvent(Scp173ActivateBreakneckSpeed);
 
         _eventManager.RegisterEvent(Scp939Attack);
+
+        _eventManager.RegisterEvent(Scp3114Disguise);
+        _eventManager.RegisterEvent(Scp3114Reveal);
+        _eventManager.RegisterEvent(Scp3114Attack);
+        _eventManager.RegisterEvent(Scp3114Strangle);
         
         PluginAPI.Events.EventManager.RegisterEvents(_synapse,this);
     }
@@ -121,7 +132,12 @@ public partial class ScpEvents : Service
         _eventManager.UnregisterEvent(Scp173ActivateBreakneckSpeed);
         
         _eventManager.UnregisterEvent(Scp939Attack);
-    
+
+        _eventManager.UnregisterEvent(Scp3114Disguise);
+        _eventManager.UnregisterEvent(Scp3114Reveal);
+        _eventManager.UnregisterEvent(Scp3114Attack);
+        _eventManager.UnregisterEvent(Scp3114Strangle);
+
         PluginAPI.Events.EventManager.UnregisterEvents(_synapse, this);
     }
 }
@@ -215,9 +231,6 @@ public class Scp939AttackEvent : ScpAttackEvent
     {
         switch (type)
         {
-            case Scp939DamageType.None:
-                ScpAttackType = ScpAttackType.Scp939None;
-                    break;
             case Scp939DamageType.Claw:
                 ScpAttackType = ScpAttackType.Scp939Claw;
                     break;
@@ -227,6 +240,7 @@ public class Scp939AttackEvent : ScpAttackEvent
             case Scp939DamageType.LungeSecondary:
                 ScpAttackType = ScpAttackType.Scp939LungeSecondary;
                 break;
+            case Scp939DamageType.None:
             default:
                 ScpAttackType = ScpAttackType.Scp939None;
                 break;
@@ -440,9 +454,9 @@ public class Scp079LockDoorEvent : Scp079InteractEvent
     public bool Unlock { get; }
 }
 
-public class Scp079SpeakerUseEvent : ScpActionEvent
+public class Scp079SpeakerUseEvent : Scp079InteractEvent
 {
-    public Scp079SpeakerUseEvent(SynapsePlayer scp, Vector3 speakerPosition) : base(scp, true)
+    public Scp079SpeakerUseEvent(SynapsePlayer scp, Vector3 speakerPosition) : base(scp, true, 0)
     {
         SpeakerPosition = speakerPosition;
     }
@@ -523,4 +537,43 @@ public class Scp079PingEvent : Scp079InteractEvent
     public Vector3 Position { get; set; }
     
     public Vector3 Normal { get; set; }
+}
+
+public class Scp3114DisguiseEvent : ScpActionEvent
+{
+    public Scp3114DisguiseEvent(SynapsePlayer scp, bool starting, bool allow, SynapseRagDoll ragdoll) : base(scp, allow)
+    {
+        Ragdoll = ragdoll;
+        Starting = starting;
+    }
+
+    public bool Starting { get; }
+
+    public SynapseRagDoll Ragdoll { get; set; }
+}
+
+public class Scp3114RevealEvent : ScpActionEvent
+{
+    public Scp3114RevealEvent(SynapsePlayer scp, bool allow) : base(scp, allow) { }
+}
+
+public class Scp3114AttackEvent : ScpAttackEvent
+{
+    public override ScpAttackType ScpAttackType => ScpAttackType.Scp3114Slap;
+
+    public Scp3114AttackEvent(SynapsePlayer scp, SynapsePlayer victim, float damage) : base(scp, victim, damage) { }
+}
+
+public class Scp3114StrangleEvent : ScpAttackEvent
+{
+    public override ScpAttackType ScpAttackType => ScpAttackType.Scp3114Strangle;
+   
+    public Scp3114StrangleEvent(SynapsePlayer scp, SynapsePlayer victim, bool realase) : base(scp, victim, 0)
+    {
+        Realase = realase;
+    }
+
+    public new float Damage => 0;
+
+    public bool Realase { get; }
 }

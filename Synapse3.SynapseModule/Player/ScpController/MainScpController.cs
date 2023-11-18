@@ -20,8 +20,11 @@ public class MainScpController
         Scp939 = new(player);
         Scp049 = new(player);
         Scp0492 = new(player);
+        Scp3114 = new(player);
         _config = config;
     }
+
+    public readonly Scp3114Controller Scp3114;
 
     public readonly Scp106Controller Scp106;
 
@@ -65,6 +68,7 @@ public class MainScpController
             RoleTypeId.Scp939 => Scp939,
             RoleTypeId.Scp049 => Scp049,
             RoleTypeId.Scp0492 => Scp0492,
+            RoleTypeId.Scp3114 => Scp3114,
             _ => null
         };
 }

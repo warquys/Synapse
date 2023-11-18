@@ -1,9 +1,12 @@
 ﻿using System;
+using CustomPlayerEffects;
 using HarmonyLib;
 using Interactables.Interobjects;
+using InventorySystem.Items.Usables.Scp244;
 using Mirror;
 using Neuron.Core.Meta;
 using PlayerRoles;
+using PlayerRoles.PlayableScps;
 using PlayerRoles.PlayableScps.HumeShield;
 using PlayerRoles.PlayableScps.Scp079;
 using PlayerRoles.PlayableScps.Scp096;
@@ -13,6 +16,7 @@ using Synapse3.SynapseModule.Dummy;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Player;
 using Synapse3.SynapseModule.Player.ScpController;
+using UnityEngine;
 
 namespace Synapse3.SynapseModule.Patching.Patches;
 
@@ -250,7 +254,7 @@ public static class MaxHealthPatch
 }
 
 [Automatic]
-[SynapsePatch("Artificial Health",PatchType.Wrapper)]
+[SynapsePatch("ArtificialHealth",PatchType.Wrapper)]
 public static class ArtificialHealthPatch
 {
     [HarmonyPrefix]
@@ -260,6 +264,99 @@ public static class ArtificialHealthPatch
         var player = __instance.GetSynapsePlayer();
         __result = __instance.ServerAddProcess(amount, player.MaxArtificialHealth, player.DecayArtificialHealth, AhpStat.DefaultEfficacy,
             0f, false);
+        return false;
+    }
+}
+
+[Automatic]
+[SynapsePatch("CanSeeInTheDark", PatchType.Wrapper)]
+public static class CanSeeInTheDarkPatch
+{
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(VisionInformation), nameof(VisionInformation.GetVisionInformation))]
+    public static bool GetVisionInformation(ref VisionInformation __result, ReferenceHub source, Transform sourceCam, Vector3 target, float targetRadius = 0f, float visionTriggerDistance = 0f, bool checkFog = true, bool checkLineOfSight = true, int maskLayer = 0, bool checkInDarkness = true)
+    {
+        bool isOnSameFloor = false;
+        bool isLooking = false;
+        if (Mathf.Abs(target.y - sourceCam.position.y) < 100f)
+        {
+            isOnSameFloor = true;
+            isLooking = true;
+        }
+
+        bool isInDistance = visionTriggerDistance == 0f;
+        var sourceTarget = target - sourceCam.position;
+        float magnitude = sourceTarget.magnitude;
+        if (isLooking && visionTriggerDistance > 0f)
+        {
+            float num = ((!checkFog) ? visionTriggerDistance : ((target.y > 980f) ? visionTriggerDistance : (visionTriggerDistance / 2f)));
+            if (magnitude <= num)
+            {
+                isInDistance = true;
+            }
+
+            isLooking = isInDistance;
+        }
+
+        var lookingAmount = 1f;
+        if (isLooking)
+        {
+            isLooking = false;
+            if (magnitude < targetRadius)
+            {
+                if (Vector3.Dot(source.transform.forward, (target - source.transform.position).normalized) > 0f)
+                {
+                    isLooking = true;
+                    lookingAmount = 1f;
+                }
+            }
+            else if (Scp244Utils.CheckVisibility(sourceCam.position, target))
+            {
+                var wordPostion = sourceCam.InverseTransformPoint(target);
+                if (targetRadius != 0f)
+                {
+                    wordPostion.x = Mathf.MoveTowards(wordPostion.x, 0f, targetRadius);
+                    wordPostion.y = Mathf.MoveTowards(wordPostion.y, 0f, targetRadius);
+                }
+
+                var aspectRatioSync = source.aspectRatioSync;
+                float num2 = Vector2.Angle(Vector2.up, new Vector2(wordPostion.x, wordPostion.z));
+                if (num2 < aspectRatioSync.XScreenEdge)
+                {
+                    float num3 = Vector2.Angle(Vector2.up, new Vector2(wordPostion.y, wordPostion.z));
+                    if (num3 < AspectRatioSync.YScreenEdge)
+                    {
+                        lookingAmount = (num2 + num3) / aspectRatioSync.XplusY;
+                        isLooking = true;
+                    }
+                }
+            }
+        }
+
+        bool isInLineOfSight = !checkLineOfSight;
+        if (isLooking && checkLineOfSight)
+        {
+            if (maskLayer == 0)
+            {
+                maskLayer = VisionInformation.VisionLayerMask;
+            }
+
+            isInLineOfSight = Physics.RaycastNonAlloc(new Ray(sourceCam.position, sourceTarget.normalized), VisionInformation.RaycastResult, isInDistance ? magnitude : sourceTarget.magnitude, maskLayer) == 0;
+            isLooking = isInLineOfSight;
+        }
+
+        bool isInDarkness = false;
+        if (checkInDarkness)
+        {
+            isInDarkness =
+                !source.FastGetSynapsePlayer().CanSeeInTheDark
+                && !VisionInformation.CheckAttachments(source) 
+                && RoomLightController.IsInDarkenedRoom(target);
+            isLooking = isLooking && !isInDarkness;
+        }
+
+        __result = new VisionInformation(source, target, isLooking, isOnSameFloor, lookingAmount, magnitude, isInLineOfSight, isInDarkness, isInDistance);
+
         return false;
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Footprinting;
 using Interactables.Interobjects;
 using Interactables.Interobjects.DoorUtils;
@@ -49,6 +50,8 @@ public static class Synapse3Extensions
     private static readonly ElevatorService _elevator;
     private static readonly PlayerEvents _playerEvents;
     private static readonly ItemEvents _itemEvents;
+
+    private static Dictionary<GameObject, SynapsePlayer> CachedPlayer = new Dictionary<GameObject, SynapsePlayer>();
 
     static Synapse3Extensions()
     {
@@ -154,6 +157,26 @@ public static class Synapse3Extensions
         return ev2.Allow;
     }
 
+    public static SynapsePlayer FastGetSynapsePlayer(this GameObject gameObject)
+    {
+        if (gameObject == null) return null;
+        if (CachedPlayer.TryGetValue(gameObject, out var player))
+            return player;
+        player = gameObject.GetSynapsePlayer();
+        CachedPlayer.Add(gameObject, player);
+        return player;
+    }
+
+    public static SynapsePlayer FastGetSynapsePlayer(this MonoBehaviour mono)
+    {
+        var gameObject = mono?.gameObject;
+        if (gameObject == null) return null;
+        if (CachedPlayer.TryGetValue(gameObject, out var player))
+            return player;
+        player = gameObject.GetSynapsePlayer();
+        CachedPlayer.Add(gameObject, player);
+        return player;
+    }
 
     public static SynapsePlayer GetSynapsePlayer(this NetworkConnection connection) =>
         connection?.identity?.GetSynapsePlayer();

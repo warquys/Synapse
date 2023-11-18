@@ -68,8 +68,7 @@ public abstract class SynapseCustomRoom : DefaultSynapseObject, IRoom, IHideable
         RoomSchematic = Synapse.Get<SchematicService>().SpawnSchematic(Attribute.SchematicId, position);
 
         var roomService = Synapse.Get<RoomService>();
-        roomService._rooms.Add(this);
-        roomService._customRooms.Add(this);
+        roomService.AddRoom(this);
         OnGenerate();
     }
 

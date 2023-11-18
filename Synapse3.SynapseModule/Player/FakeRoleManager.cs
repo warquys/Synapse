@@ -31,7 +31,6 @@ public class FakeRoleManager
     {
         _player = player;
         _playerService = playerService;
-        Timing.CallDelayed(Timing.WaitForOneFrame, () => ready = true);
     }
 
     public void Reset()
@@ -104,6 +103,8 @@ public class FakeRoleManager
 
     public void WriteRoleSyncInfoFor(SynapsePlayer receiver, NetworkWriter writer)
     {
+        if (receiver == _playerService.Host) return;
+
         writer.WriteUInt(_player.NetworkIdentity.netId);
         var roleInfo = GetRoleInfo(receiver);
         if (receiver.Team == Team.Dead && _player is DummyPlayer { SpectatorVisible: false })

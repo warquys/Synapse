@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using CustomPlayerEffects;
 using HarmonyLib;
 using Interactables.Interobjects;
@@ -20,7 +19,9 @@ using PlayerRoles.PlayableScps.Scp079.Pinging;
 using PlayerRoles.PlayableScps.Scp096;
 using PlayerRoles.PlayableScps.Scp106;
 using PlayerRoles.PlayableScps.Scp173;
+using PlayerRoles.PlayableScps.Scp3114;
 using PlayerRoles.PlayableScps.Scp939;
+using PlayerRoles.PlayableScps.Subroutines;
 using PlayerRoles.Spectating;
 using PlayerStatsSystem;
 using PluginAPI.Events;
@@ -31,13 +32,14 @@ using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Map.Elevators;
 using Synapse3.SynapseModule.Map.Rooms;
+using Synapse3.SynapseModule.Player;
 using Synapse3.SynapseModule.Role;
 using UnityEngine;
 using Utils.Networking;
 using Utils.NonAllocLINQ;
 using VoiceChat;
-using static PlayerList;
 using static PlayerRoles.PlayableScps.Scp173.Scp173TeleportAbility;
+using static PlayerRoles.PlayableScps.Scp3114.Scp3114Strangle;
 using static PocketDimensionTeleport;
 
 namespace Synapse3.SynapseModule.Patching.Patches;
@@ -374,6 +376,10 @@ public static class Scp079SpeakPatch
             var speaker = __instance.ProximityPlayback.transform.position;
             var ev = new Scp079SpeakerUseEvent(player, speaker);
             Scp.Scp079SpeakerUse.RaiseSafely(ev);
+
+            if (ev.Cost > player.MainScpController.Scp079.Energy)
+                return false;
+            player.MainScpController.Scp079.Energy -= ev.Cost;
 
             __result = ev.Allow ? VoiceChatChannel.Proximity : VoiceChatChannel.None;
             return false;
@@ -945,7 +951,7 @@ public static class Scp106AttackPatch
             if (!Attack(new Scp106AttackEvent(scp, victim, ScpAttackType.Scp106Corroding)))
                 return false;
             effect.AttackerHub = scp;
-            playerEffectsController.EnableEffect<Corroding>(20f);
+            playerEffectsController.EnableEffect<Corroding>(Scp106Attack.CorrodingTime);
             return false;
         }
         catch (Exception ex)
@@ -1218,8 +1224,13 @@ public static class Scp0492AttackPatch
 public static class PlayerEscapePocketDimensionPatch
 {
     private static readonly ScpEvents Scp;
-    static PlayerEscapePocketDimensionPatch() => Scp = Synapse.Get<ScpEvents>();
-
+    private static readonly PlayerService Player;
+    
+    static PlayerEscapePocketDimensionPatch()
+    {
+        Scp = Synapse.Get<ScpEvents>();
+    }
+    
     [HarmonyPrefix]
     [HarmonyPatch(typeof(PocketDimensionTeleport), nameof(PocketDimensionTeleport.OnTriggerEnter))]
     public static bool OnTriggerEnter(PocketDimensionTeleport __instance, Collider other)
@@ -1256,6 +1267,7 @@ public static class PlayerEscapePocketDimensionPatch
                     return false;
                 fpcRole.FpcModule.ServerOverridePosition(ev.EscapePosition, Vector3.zero);
                 hub.playerEffectsController.EnableEffect<Disabled>(DisabledDuration, addDuration: true);
+                hub.playerEffectsController.EnableEffect<Traumatized>();
                 hub.playerEffectsController.DisableEffect<Corroding>();
                 ImageGenerator.pocketDimensionGenerator.GenerateRandom();
             }
@@ -1268,7 +1280,23 @@ public static class PlayerEscapePocketDimensionPatch
             return true;
         }
     }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(PocketCorroding), nameof(PocketCorroding.OnTick))]
+    public static void OnTick(PocketCorroding __instance)
+    {
+        if (__instance.IsEnabled) return;
+        var synapsePlayer = __instance.Hub?.GetSynapsePlayer();
+        if (synapsePlayer == null) return;
+        foreach (var player in Player.Players)
+        {
+            if (!player.MainScpController.Scp106.IsInstance)
+                return;
+            player.MainScpController.Scp106.PlayersInPocket.Remove(synapsePlayer);
+        }
+    }
 }
+
 
 [Automatic]
 [SynapsePatch("Scp173Tantrum", PatchType.ScpEvent)]
@@ -1459,7 +1487,7 @@ public static class Add096TargetPatch
         }
         catch (Exception ex)
         {
-            SynapseLogger<Synapse>.Error("Scp173 Update Observers Patch failed\n" + ex);
+            SynapseLogger<Synapse>.Error("Scp096 Add Target Patch failed\n" + ex);
             return true;
         }
     }
@@ -1487,9 +1515,200 @@ public static class Add096TargetPatch
         }
         catch (Exception ex)
         {
-            SynapseLogger<Synapse>.Error("Scp173 Update Observers Patch failed\n" + ex);
+            SynapseLogger<Synapse>.Error("Scp096 Update Target Patch failed\n" + ex);
             return true;
         }
     }
 }
+
+
+[Automatic]
+[SynapsePatch("Scp3114Disguise", PatchType.ScpEvent)]
+public static class Scp3114DisguisePatch
+{
+    private static readonly ScpEvents _scp;
+
+    static Scp3114DisguisePatch()
+    {
+        _scp = Synapse.Get<ScpEvents>();
+    }
+
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Scp3114Disguise), nameof(Scp3114Disguise.OnProgressSet))]
+    public static bool DisguiseProgress(Scp3114Disguise __instance)
+    {
+        try
+        {
+            if (!__instance.IsInProgress && __instance.CastRole.CurIdentity.Status != Scp3114Identity.DisguiseStatus.Equipping)
+                return false;
+
+            var ragdoll = __instance.CurRagdoll.GetSynapseRagDoll();
+            var scp = __instance.GetSynapsePlayer();
+
+            var ev = new Scp3114DisguiseEvent(scp, __instance.IsInProgress, true, ragdoll);
+            _scp.Scp3114Disguise.RaiseSafely(ev);
+            return ev.Allow;
+        }
+        catch (Exception ex)
+        {
+            SynapseLogger<Synapse>.Error("Scp3114 Disguise Progress Patch failed\n" + ex);
+            return true;
+        }
+    }
+
+}
+
+[Automatic]
+[SynapsePatch("Scp3114Revealing", PatchType.ScpEvent)]
+public static class Scp3114RevealingPatch
+{
+    private static readonly ScpEvents _scp;
+
+    static Scp3114RevealingPatch()
+    {
+        _scp = Synapse.Get<ScpEvents>();
+    }
+
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Scp3114Reveal), nameof(Scp3114Reveal.ServerProcessCmd))]
+    public static bool DisguiseServerComplete(Scp3114Disguise __instance)
+    {
+        try
+        {
+            var scp = __instance.GetSynapsePlayer();
+
+            var ev = new Scp3114RevealEvent(scp, true);
+            _scp.Scp3114Reveal.RaiseSafely(ev);
+            return ev.Allow;
+        }
+        catch (Exception ex)
+        {
+            SynapseLogger<Synapse>.Error("Scp3114 Revealing Patch failed\n" + ex);
+            return true;
+        }
+    }
+
+}
+
+[Automatic]
+[SynapsePatch("Scp3114Attack", PatchType.ScpEvent)]
+public static class Scp3114AttackPatch
+{
+
+    private static readonly ScpEvents _scp;
+
+    static Scp3114AttackPatch()
+    {
+        _scp = Synapse.Get<ScpEvents>();
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Scp3114Slap), nameof(Scp3114Slap.DamagePlayers))]
+    public static bool DamagePlayers(Scp3114Slap __instance)
+    {
+        try
+        {
+            var playerCameraReference = __instance.Owner.PlayerCameraReference;
+            var primaryTarget = __instance.DetectedPlayers.GetPrimaryTarget(playerCameraReference);
+            if (primaryTarget != null)
+            {
+                var scp = __instance.GetSynapsePlayer();
+                var victim = primaryTarget.GetSynapsePlayer();
+                var ev = new Scp3114AttackEvent(scp, victim, __instance.DamageAmount);
+                _scp.Scp3114Attack.Raise(ev);
+                if (!ev.Allow)
+                    return false;
+
+                __instance.DamagePlayer(primaryTarget, __instance.DamageAmount);
+                if (__instance.HasAttackResultFlag(AttackResult.KilledHuman))
+                {
+                    InvokeServerOnKill(__instance);
+                }
+
+                if (__instance.HasAttackResultFlag(AttackResult.AttackedHuman))
+                {
+                    InvokeServerOnHit(__instance);
+                }
+
+                var killReward = __instance._humeShield.CurValue + 25f;
+                __instance._humeShield.CurValue = Mathf.Min(killReward, __instance._humeShield.MaxValue);
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            SynapseLogger<Synapse>.Error("Scp3114 Attack Patch failed\n" + ex);
+            return true;
+        }
+    }
+
+    private static void InvokeServerOnHit(Scp3114Slap source)
+    => Synapse3Extensions.RaiseEvent(source, nameof(Scp3114Slap.ServerOnHit));
+
+    private static void InvokeServerOnKill(Scp3114Slap source)
+        => Synapse3Extensions.RaiseEvent(source, nameof(Scp3114Slap.ServerOnKill));
+}
+
+
+[Automatic]
+[SynapsePatch("Scp3114Strangle", PatchType.ScpEvent)]
+public static class Scp3114StranglePatch
+{
+
+    private static readonly ScpEvents _scp;
+
+    static Scp3114StranglePatch()
+    {
+        _scp = Synapse.Get<ScpEvents>();
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Scp3114Strangle), nameof(Scp3114Strangle.ServerProcessCmd))]
+    public static bool ServerProcessCmd(Scp3114Strangle __instance, NetworkReader reader)
+    {
+        try
+        {
+            var syncTarget = __instance.ProcessAttackRequest(reader);
+            var hasValue = syncTarget.HasValue;
+            var scp = __instance.GetSynapsePlayer();
+            Scp3114StrangleEvent ev;
+            if (!hasValue)
+            {
+                var victim = __instance.SyncTarget.HasValue ?  
+                    __instance.SyncTarget.Value.Target.GetSynapsePlayer() : 
+                    null;
+                ev = new Scp3114StrangleEvent(scp, victim, true);
+            }
+            else
+            {
+                var victim = syncTarget.Value.Target.GetSynapsePlayer();
+                ev = new Scp3114StrangleEvent(scp, victim, false);
+            }
+
+            _scp.Scp3114Strangle.RaiseSafely(ev);
+            if (!ev.Allow) return false;
+
+            if (hasValue && !__instance.SyncTarget.HasValue)
+            {
+                InvokeServerOnBegin(__instance);
+            }
+
+            __instance.SyncTarget = syncTarget;
+            __instance._rpcType = RpcType.TargetResync;
+            __instance.ServerSendRpc(toAll: true);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            SynapseLogger<Synapse>.Error("Scp3114 Strangle Patch failed\n" + ex);
+            return true;
+        }
+    }
+
+    private static void InvokeServerOnBegin(Scp3114Strangle source)
+        => Synapse3Extensions.RaiseEvent(source, nameof(Scp3114Strangle.ServerOnBegin));
+}
+
 #endif

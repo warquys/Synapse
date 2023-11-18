@@ -1,5 +1,15 @@
-﻿using Synapse3.SynapseModule.Enums;
+﻿using PluginAPI.Core;
+using Synapse3.SynapseModule.Config;
+using Synapse3.SynapseModule.Database;
+using System.Data;
+using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
+using Synapse3.SynapseModule.Item;
+using Synapse3.SynapseModule.Map.Rooms;
+using Synapse3.SynapseModule.Map;
+using Synapse3.SynapseModule.Permissions;
+using Synapse3.SynapseModule.Role;
+using Synapse3.SynapseModule.Teams;
 
 namespace Synapse3.SynapseModule.Player;
 
@@ -7,15 +17,20 @@ public class SynapseServerPlayer : SynapsePlayer
 {
     private readonly ServerEvents _serverEvents;
     
-    public SynapseServerPlayer()
+    public SynapseServerPlayer() : base()
     {
         _serverEvents = Synapse.Get<ServerEvents>();
     }
+
     /// <inheritdoc cref="SynapsePlayer.IsServer"/>
     public override PlayerType PlayerType => PlayerType.Server;
 
     public override void Awake()
     {
+        Hub = GetComponent<ReferenceHub>();
+        GameConsoleTransmission = GetComponent<GameConsoleTransmission>();
+        BroadcastController = GetComponent<global::Broadcast>();
+
         Synapse.Get<PlayerService>().Host = this;
     }
 

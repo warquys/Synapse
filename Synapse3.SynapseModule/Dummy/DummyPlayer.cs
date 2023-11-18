@@ -30,7 +30,9 @@ public class DummyPlayer : SynapsePlayer
     {
         get => FirstPersonMovement?.MouseLook._curVertical ?? 0;
     }
-    
+
+    public DummyPlayer() : base() { }
+
     public void SetRotation(Quaternion rotation)
     {
         var firstPerson = FirstPersonMovement;
@@ -82,6 +84,12 @@ public class DummyPlayer : SynapsePlayer
 
     public override void Awake()
     {
+        Hub = GetComponent<ReferenceHub>();
+        GameConsoleTransmission = GetComponent<GameConsoleTransmission>();
+        BroadcastController = GetComponent<global::Broadcast>();
+
+        FakeRoleManager.ready = true;
+
         var service = Synapse.Get<DummyService>();
         //This need to wait one Frame or else it will be executed before Synapse can set SynapseDummy
         Timing.CallDelayed(Timing.WaitForOneFrame, () =>

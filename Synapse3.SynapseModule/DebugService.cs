@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Mirror;
 using Neuron.Core;
 using Neuron.Core.Events;
 using Neuron.Core.Meta;
+using Neuron.Core.Plugins;
 using PlayerRoles;
+using PlayerRoles.FirstPersonControl;
 using PluginAPI.Roles;
 using Scp914;
 using Synapse3.SynapseModule.Config;
@@ -20,6 +23,7 @@ using Synapse3.SynapseModule.Map.Scp914;
 using Synapse3.SynapseModule.Player;
 using Synapse3.SynapseModule.Role;
 using UnityEngine;
+using YamlDotNet.Core.Tokens;
 
 namespace Synapse3.SynapseModule;
 
@@ -33,9 +37,10 @@ public class DebugService : Service
     private ScpEvents _scp;
     private ServerEvents _server;
     private EventManager _event;
+    private RoomService _roomSerivce;
 
     public DebugService(PlayerEvents player, MapEvents map, RoundEvents round, ItemEvents item, ScpEvents scp,
-        ServerEvents server, EventManager eventManager)
+        ServerEvents server, EventManager eventManager, RoomService room)
     {
         _player = player;
         _map = map;
@@ -44,6 +49,7 @@ public class DebugService : Service
         _server = server;
         _scp = scp;
         _event = eventManager;
+        _roomSerivce = room;
     }
 
     public override void Enable()
@@ -79,6 +85,7 @@ public class DebugService : Service
         var method = ((Action<IEvent>)Event).Method;
         foreach (var reactor in _event.Reactors)
         {
+            if (reactor.Key == typeof(PluginLoadEvent)) continue;
             if (reactor.Key == typeof(UpdateObjectEvent)) continue;
             if (reactor.Key == typeof(UpdateEvent)) continue;
             if (reactor.Key == typeof(EscapeEvent)) continue;
@@ -92,35 +99,40 @@ public class DebugService : Service
             if (reactor.Key.IsAbstract) continue;
             reactor.Value.SubscribeUnsafe(this, method);
         }
-        _player.KeyPress.Subscribe(OnKeyPress);
-        _round.Start.Subscribe(OnStart);
+        _player.KeyPress.Subscribe(OnKeyPress, 100);
+        _round.Start.Subscribe(OnStart, 100);
         
         _item.ConsumeItem.Subscribe(ev =>
         {
             if (ev.State == ItemInteractState.Finalize)
                 ev.Allow = false;
-        });
+        }, 100);
         _player.Escape.Subscribe(ev =>
         {
             if(ev.EscapeType == EscapeType.NotAssigned)
                 Logger.Warn("Escape not assigned");
-        });
+        }, 100);
 
         _round.Waiting.Subscribe(ev =>
         {
-            ((SynapseNetworkRoom)Synapse.Get<RoomService>().GetRoom((uint)RoomType.TestingRoom)).Position +=
+            ((SynapseNetworkRoom)_roomSerivce.GetRoom((uint)RoomType.TestingRoom)).Position +=
                 Vector3.up * 5;
-            ((SynapseNetworkRoom)Synapse.Get<RoomService>().GetRoom((uint)RoomType.Scp330)).Position +=
+            ((SynapseNetworkRoom)_roomSerivce.GetRoom((uint)RoomType.Scp330)).Position +=
                 Vector3.up * 5;
-            
+            Logger.Warn("Room TestingRoom & Scp330 moved");
+
             var text = "";
             foreach (var prefab in NetworkClient.prefabs)
             {
                 text += "\n" + prefab.Value.name + " ID: " + prefab.Key;
             }
+            var prefabsFile = Path.Combine(Synapse.Get<NeuronBase>().RelativePath(), "prefabs.txt");
+            File.WriteAllText(prefabsFile, text);
+            Logger.Warn($"prefabs listed in {prefabsFile}");
+        }, 100);
 
-            File.WriteAllText(Path.Combine(Synapse.Get<NeuronBase>().RelativePath(), "prefabs.txt"), text);
-        });
+        _scp.Scp3114Attack.Subscribe(ev => ev.Allow = false);
+        _scp.Scp3114Strangle.Subscribe(ev => ev.Allow = false);
     }
 
     private void OnStart(RoundStartEvent args)
@@ -142,29 +154,17 @@ public class DebugService : Service
     
     private void OnKeyPress(KeyPressEvent ev)
     {
-        //Check if dummy work
         switch (ev.KeyCode)
         {
-            case KeyCode.Alpha1:
-                ev.Player.Inventory.GiveItem(ItemType.Adrenaline);
-                ev.Player.Inventory.GiveItem(ItemType.Medkit);
-                ev.Player.Inventory.GiveItem(ItemType.Painkillers);
-                break;
-
+         
             case KeyCode.Alpha2:
                 SynapseLogger<DebugService>.Info("Effects: ");
                 foreach (var effect in ev.Player.PlayerEffectsController.AllEffects)
                 {
                     SynapseLogger<DebugService>.Info(effect.name);
                 }
-
                 break;
 
-            case KeyCode.Alpha3:
-                break;
-
-            case KeyCode.Alpha4:
-                break;
         }
     }
 

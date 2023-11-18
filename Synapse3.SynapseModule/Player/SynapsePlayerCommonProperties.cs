@@ -1,8 +1,10 @@
 ﻿using System.Data;
 using System.Linq;
 using System.Reflection;
+using CustomPlayerEffects;
 using GameCore;
 using InventorySystem.Disarming;
+using JetBrains.Annotations;
 using Mirror.LiteNetLib4Mirror;
 using PlayerRoles;
 using PlayerRoles.FirstPersonControl;
@@ -14,6 +16,7 @@ using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Teams;
 using UnityEngine;
+using YamlDotNet.Core.Tokens;
 
 namespace Synapse3.SynapseModule.Player;
 
@@ -244,10 +247,21 @@ public partial class SynapsePlayer
 
     public byte UnitNameId
     {
-        get => (CurrentRole as HumanRole)?.UnitNameId ?? 0;
+        get
+        {
+            if (MainScpController.Scp3114.IsInstance)
+                return MainScpController.Scp3114.UnitNameId;
+            if (CurrentRole is not HumanRole role) return 0;
+            return role.UnitNameId;
+        }
         set
         {
-            if(CurrentRole is not HumanRole role) return;
+            if (MainScpController.Scp3114.IsInstance)
+            {
+                MainScpController.Scp3114.UnitNameId = value;
+                return;
+            }
+            if (CurrentRole is not HumanRole role) return;
             role.UnitNameId = value;
         }
     }
@@ -355,4 +369,21 @@ public partial class SynapsePlayer
     /// The sneak crouching of the curent roleTypeID
     /// </summary>
     public virtual float CrouchingSpeed => FirstPersonMovement?.CrouchSpeed ?? 0;
+
+    /// <summary>
+    /// If the role can see in the dark, if false the <see cref="Effect.InsufficientLighting"/> can't be apply.
+    /// For most roles that depends on whether the player is in a dark room
+    /// </summary>
+    public bool InsufficientLight => CurrentRole is IAmbientLightRole lightRole && !lightRole.InsufficientLight;
+
+    /// <summary>
+    /// If the player is in a dark room
+    /// </summary>
+    public bool InDarkness => CurrentRole is not FpcStandardRoleBase fpsRole || fpsRole.InDarkness;
+
+    /// <summary>
+    /// If the player can the in the dark
+    /// </summary>
+    public bool CanSeeInTheDark { get; set; }
+
 }

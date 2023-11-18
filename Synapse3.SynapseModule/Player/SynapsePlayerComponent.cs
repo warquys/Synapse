@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Mirror;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Role;
@@ -12,7 +13,13 @@ public partial class SynapsePlayer
 {
     public virtual void Awake()
     {
-        if(_player.Players.Contains(this)) return;
+        Hub = GetComponent<ReferenceHub>();
+        GameConsoleTransmission = GetComponent<GameConsoleTransmission>();
+        BroadcastController = GetComponent<global::Broadcast>();
+
+        FakeRoleManager.ready = true;
+
+        if (_player.Players.Contains(this)) return;
         
         _player.AddPlayer(this);
     }

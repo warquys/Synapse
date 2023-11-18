@@ -111,4 +111,34 @@
       <Optimize>true</Optimize>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+      <FileAlignment>512</FileAlignment>
+      <Deterministic>True</Deterministic>
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Custom Version|AnyCPU'">
+      <FileAlignment>512</FileAlignment>
+      <Deterministic>True</Deterministic>
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Main Release|AnyCPU'">
+      <FileAlignment>512</FileAlignment>
+      <Deterministic>True</Deterministic>
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dev|AnyCPU'">
+      <FileAlignment>512</FileAlignment>
+      <Deterministic>True</Deterministic>
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Patchless|AnyCPU'">
+      <FileAlignment>512</FileAlignment>
+      <Deterministic>True</Deterministic>
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+
 </Project>

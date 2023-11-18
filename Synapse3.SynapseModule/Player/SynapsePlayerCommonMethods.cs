@@ -6,6 +6,7 @@ using Neuron.Core.Logging;
 using PlayerRoles;
 using PlayerRoles.FirstPersonControl;
 using PlayerStatsSystem;
+using PluginAPI.Core;
 using PluginAPI.Events;
 using RemoteAdmin;
 using Respawning;
@@ -279,8 +280,10 @@ public partial class SynapsePlayer
         }
     }
 
-    public void TriggerEscape(bool ignoreEscapeDistance = true)
+    public virtual void TriggerEscape(bool ignoreEscapeDistance = true)
     {
+        if (PlayerType == PlayerType.Server) return;
+
         var state = GetEscapeType(ignoreEscapeDistance);
         var ev = new EscapeEvent(this, true, state);
         _playerEvents.Escape.RaiseSafely(ev);

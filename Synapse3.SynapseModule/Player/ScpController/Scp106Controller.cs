@@ -64,10 +64,11 @@ public class Scp106Controller : ScpShieldController<Scp106Role>
 
     public HashSet<SynapsePlayer> PlayersInPocket { get; } = new();
 
-    internal void ResetDefault()
+    protected internal override void ResetDefault()
     {
         PlayersInPocket.Clear();
     }
+
 
     public override RoleTypeId ScpRole => RoleTypeId.Scp106;
 }

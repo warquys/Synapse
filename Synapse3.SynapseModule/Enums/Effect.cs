@@ -143,10 +143,48 @@ public enum Effect
     /// </summary>
     /// <remarks>0 = Disabled, 1 = 1xScp1853, 2 = 2xScp1853...</remarks>
     Scp1853,
+    /// <summary>
+    /// Change visual effetcs and sound effects upon seeing SCP-106, next attack of scp-106 one shot (in new scp-106 attack).
+    /// </summary>
+    /// <remarks>0 = Disabled,  1 = Enabled</remarks>
     Traumatized,
+    /// <summary>
+    /// Damage by 8 HP/s and triple stamina consuming, next attack of scp-049 one shot.
+    /// </summary>
+    /// <remarks>0 = Disabled,  1 = Enabled</remarks>
     CardiacArrest,
+    /// <summary>
+    /// Mute the sound track.
+    /// </summary>
+    /// <remarks>0 = Disabled,  1 = Enabled</remarks>
     SoundtrackMute,
+    /// <summary>
+    /// The effects may vary depending on the server configuration, but it allows you to avoid taking damage, possibly giving damage to other players.
+    /// </summary>
+    /// <remarks>0 = Disabled,  1 = Enabled</remarks>
     SpawnProtected,
+    /// <summary>
+    /// Make the player see in the dark.
+    /// </summary>
+    /// <remarks>0 = Disabled,  1 = Enabled</remarks>
     InsufficientLighting,
-    Scanned
+    /// <summary>
+    /// Play a beep sound.
+    /// </summary>
+    /// <remarks>0 = Disabled,  1 = Enabled</remarks>
+    Scanned,
+    /// <summary>
+    /// Strangle the player wheen attacked by scp-3114. 
+    /// Use <see cref="Player.ScpController.Scp3114Controller.StrangleTarget"/> to strangle a player.
+    /// <remarks>0 = Disabled,  1 = Enabled</remarks>
+    /// </summary>
+    Strangled,
+    /// <summary>
+    /// Ignore door like scp-106 but do no slow down.
+    /// </summary>
+    Ghostly,
+    /// <summary>
+    /// Make no sound when moving.
+    /// </summary>
+    SilentWalk,
 }

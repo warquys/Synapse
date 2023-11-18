@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Synapse3.SynapseModule.Player.ScpController;
 
-public class Scp173Controller : ScpShieldController<Scp173Role> 
+public class Scp173Controller : ScpShieldController<Scp173Role>, IResettableController
 {
     public Scp173Controller(SynapsePlayer player) : base(player) { }
     
@@ -112,7 +112,7 @@ public class Scp173Controller : ScpShieldController<Scp173Role>
         NetworkServer.Spawn(tantrum.gameObject);
     }
 
-    internal void ResetDefault()
+    void IResettableController.ResetDefault()
     {
         BlinkCooldownBase = Scp173BlinkTimer.CooldownBaseline;
         BlinkCooldownPerPlayer = Scp173BlinkTimer.CooldownPerObserver;

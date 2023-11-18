@@ -10,6 +10,7 @@ using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
 using Synapse3.SynapseModule.Permissions;
 using Synapse3.SynapseModule.Permissions.RemoteAdmin;
+using Synapse3.SynapseModule.Player.ScpController;
 
 namespace Synapse3.SynapseModule.Player;
 
@@ -338,15 +339,9 @@ public class PlayerService : Service
         if (!ev.Allow) return;
         ev.Player.MainScpController.ProximityChat = false;
         ev.Player._maxHealth = -1;
-        switch (ev.Player.RoleType)
-        {
-            case RoleTypeId.Scp106:
-                ev.Player.MainScpController.Scp106.ResetDefault();
-                break;
-            case RoleTypeId.Scp173:
-                ev.Player.MainScpController.Scp173.ResetDefault();
-                break;
-        }
+
+        if (ev.Player.MainScpController.CurrentController is IResettableController resettable)
+            resettable.ResetDefault();
         
         Timing.CallDelayed(Timing.WaitForOneFrame, () =>
         {

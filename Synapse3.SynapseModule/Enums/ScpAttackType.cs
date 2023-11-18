@@ -17,4 +17,6 @@ public enum ScpAttackType
     Scp939Claw,
     Scp939Lunge,
     Scp939LungeSecondary,
+    Scp3114Slap,
+    Scp3114Strangle,
 }

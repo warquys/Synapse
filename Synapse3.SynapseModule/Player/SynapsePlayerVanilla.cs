@@ -17,7 +17,7 @@ public partial class SynapsePlayer
     /// <summary>
     /// The Vanilla Player class
     /// </summary>
-    public ReferenceHub Hub { get; }
+    public ReferenceHub Hub { get; protected set; }
 
     public Transform CameraReference => Hub.PlayerCameraReference;
     
@@ -49,9 +49,9 @@ public partial class SynapsePlayer
 
     public PlayerRoleManager RoleManager => Hub.roleManager;
 
-    public GameConsoleTransmission GameConsoleTransmission { get; }
+    public GameConsoleTransmission GameConsoleTransmission { get; protected set; }
     
-    public global::Broadcast BroadcastController { get; }
+    public global::Broadcast BroadcastController { get; protected set; }
 
     public CommandSender CommandSender
     {

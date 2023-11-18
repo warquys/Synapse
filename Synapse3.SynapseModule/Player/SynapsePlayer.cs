@@ -1,4 +1,5 @@
-﻿using Synapse3.SynapseModule.Config;
+﻿using System.Diagnostics;
+using Synapse3.SynapseModule.Config;
 using Synapse3.SynapseModule.Database;
 using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Events;
@@ -33,9 +34,6 @@ public partial class SynapsePlayer : MonoBehaviour
 
     internal SynapsePlayer()
     {
-        Hub = GetComponent<ReferenceHub>();
-        GameConsoleTransmission = GetComponent<GameConsoleTransmission>();
-        BroadcastController = GetComponent<global::Broadcast>();
 
         _player = Synapse.Get<PlayerService>();
         _server = Synapse.Get<ServerService>();
@@ -54,6 +52,6 @@ public partial class SynapsePlayer : MonoBehaviour
         ActiveHint = new TextHintList(this);
         MainScpController = new ScpController.MainScpController(this, _config);
         CustomInfo = new CustomInfoList(this, _player, _playerEvents);
-        FakeRoleManager = new(this, _mirror, _player);
+        FakeRoleManager = new FakeRoleManager(this, _mirror, _player);
     }
 }

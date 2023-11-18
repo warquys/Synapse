@@ -81,13 +81,16 @@ public partial class SynapsePlayer
     public void SetRoleFlags(RoleTypeId role, RoleSpawnFlags flags, RoleChangeReason reason = RoleChangeReason.None) =>
         RoleManager.ServerSetRole(role, reason, flags);
 
-    //TODO: Rework this since NW decided to make this easier
-    
+    public void SetRoleFlags(RoleTypeId role, RoleSpawnFlags flags, RoleChangeReason reason, NetworkReader data) =>
+        RoleManager.InitializeNewRole(role, RoleChangeReason.None, RoleSpawnFlags.None, data);
+
     /// <summary>
     /// Changes the role of the player without changing other values
     /// </summary>
     public void ChangeRoleLite(RoleTypeId role, NetworkReader data = null)
     {
+        RoleManager.InitializeNewRole(role, RoleChangeReason.None, RoleSpawnFlags.None, data);
+        /*
         PlayerRoleBase prevRole = null;
         if (RoleManager._anySet)
         {
@@ -137,7 +140,7 @@ public partial class SynapsePlayer
             reader.ReadSpawnData(data);
         }
 
-        RoleManager._sendNextFrame = true;
+        RoleManager._sendNextFrame = true;*/
     }
 
     public void SetPlayerRoleTypeAdvance(RoleTypeId role, Vector3 position)
