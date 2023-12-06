@@ -271,12 +271,14 @@ public static class RemoteAdminListPatch
 public static class RemoteAdminPlayerDataRequestPatch
 {
     private static readonly RemoteAdminCategoryService CategoryService;
+    private static readonly PermissionService PermissionService;
     private static readonly TeamService TeamService;
 
     static RemoteAdminPlayerDataRequestPatch()
     {
         CategoryService = Synapse.Get<RemoteAdminCategoryService>();
         TeamService = Synapse.Get<TeamService>();
+        PermissionService = Synapse.Get<PermissionService>();
     }
 
     [HarmonyPrefix]
@@ -296,6 +298,13 @@ public static class RemoteAdminPlayerDataRequestPatch
                 if (category != null && category.CanSeeCategory(sender.GetSynapsePlayer()))
                 {
                     sender.RaReply("$1 " + category.GetInfo(sender, number == 0), true, true, string.Empty);
+                    return false;
+                }
+
+                var groupe = PermissionService.Groups.FirstOrDefault(p => p.Value.GroupId == categoryId);
+                if (groupe.Value != null)
+                {
+                    sender.RaReply("$1 " + groupe.Value.GetCompressiveInfo(), true, true, string.Empty);
                     return false;
                 }
             }

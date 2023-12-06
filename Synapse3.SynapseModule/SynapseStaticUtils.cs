@@ -12,7 +12,7 @@ namespace Synapse3.SynapseModule;
 public partial class Synapse
 {
     public const int Major = 3;
-    public const int Minor = 3;
+    public const int Minor = 0;
     public const int Patch = 0;
 
 #if CUSTOM_VERSION
@@ -25,7 +25,7 @@ public const VersionType Type = VersionType.Dev;
     public const VersionType Type = VersionType.None;
 #endif
 
-    public const string SubVersion = "2.0 unstable";
+    public const string SubVersion = "3.0 unstable";
     // Manualy ask to the dev the new version
     public const string BasedGameVersion = "13.3.1";
 
@@ -35,7 +35,6 @@ public const VersionType Type = VersionType.Dev;
     /// or by creating a new instance of the type using the ninject kernel making
     /// injection usable.
     /// </summary>
-    /// <exception cref=""></exception>
     public static T Get<T>()
     {
         if (Exist<T>()) return Globals.Kernel.Get<T>();

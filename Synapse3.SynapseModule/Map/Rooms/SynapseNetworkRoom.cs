@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using MapGeneration;
 using Mirror;
@@ -12,7 +13,9 @@ using Synapse3.SynapseModule.Player;
 using UnityEngine;
 
 namespace Synapse3.SynapseModule.Map.Rooms;
-
+#if DEBUG
+[DebuggerDisplay("{DebuggerDisplay,nq}")]
+#endif
 public class SynapseNetworkRoom : NetworkSynapseObject, IVanillaRoom
 {
     internal SynapseNetworkRoom(RoomIdentifier identifier, RoomType type)
@@ -127,4 +130,10 @@ public class SynapseNetworkRoom : NetworkSynapseObject, IVanillaRoom
 
     private List<SynapseDoor> _doors = new List<SynapseDoor>();
     public ReadOnlyCollection<SynapseDoor> Doors => _doors.AsReadOnly();
+
+    // DEBUG
+#if DEBUG
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    public string DebuggerDisplay => Name;
+#endif
 }

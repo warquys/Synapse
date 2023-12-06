@@ -38,6 +38,7 @@ using UnityEngine;
 using Utils.Networking;
 using Utils.NonAllocLINQ;
 using VoiceChat;
+using static PlayerList;
 using static PlayerRoles.PlayableScps.Scp173.Scp173TeleportAbility;
 using static PlayerRoles.PlayableScps.Scp3114.Scp3114Strangle;
 using static PocketDimensionTeleport;
@@ -805,6 +806,11 @@ public static class Scp096AttackPatch
             SynapseLogger<Synapse>.Error("Scp096Attack Patch failed\n" + e);
             return true;
         }
+    }
+
+    private static void InvokeOnWindowHit(Scp096HitHandler source, BreakableWindow breakableWindow)
+    {
+        Synapse3Extensions.RaiseEvent(source, nameof(Scp096HitHandler.OnWindowHit), breakableWindow);
     }
 }
 

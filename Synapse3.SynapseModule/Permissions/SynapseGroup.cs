@@ -108,21 +108,44 @@ public class SynapseGroup : IDocumentSection
         return value;
     }
 
+    public string GetCompressiveInfo()
+    {
+        var result = "Group:" +
+                    $"\nDefault: {Default}" +
+                    $"\nNorthWood: {NorthWood}" +
+                    $"\nRemote Admin: {RemoteAdmin}" +
+                    $"\nBadge: {Badge}" +
+                    $"\nColor: {Color}" +
+                    $"\nCover: {Cover}" +
+                    $"\nHidden: {Hidden}" +
+                    $"\nKickPower: {KickPower}" +
+                    $"\nRequired Kick Power: {RequiredKickPower}" +
+                    "\nPermissions:";
+        foreach (var perm in Permissions)
+            result += $"\n    - {perm}";
+
+        result += "\nInheritance:";
+        foreach (var inherit in Inheritance)
+            result += $"\n    - {inherit}";
+        
+        return result;
+    }
+
     public SynapseGroup Copy() => new()
     {
         GroupId = GroupId,
+        Default = Default,
+        NorthWood = NorthWood,
+        RemoteAdmin = RemoteAdmin,
         Badge = Badge,
         Color = Color,
         Cover = Cover,
-        Default = Default,
         Hidden = Hidden,
-        Inheritance = Inheritance,
         KickPower = KickPower,
-        Members = Members,
-        NorthWood = NorthWood,
-        Permissions = Permissions,
-        RemoteAdmin = RemoteAdmin,
-        RequiredKickPower = RequiredKickPower
+        RequiredKickPower = RequiredKickPower,
+        Permissions = new(Permissions),
+        Inheritance = new(Inheritance),
+        Members = new(Members),
     };
 
     private const string VanillaPrefix = "vanilla";

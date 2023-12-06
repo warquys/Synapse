@@ -1,6 +1,7 @@
 ﻿using System;
 using Mirror;
 using Synapse3.SynapseModule.Enums;
+using UnityEngine;
 
 namespace Synapse3.SynapseModule.Player;
 
@@ -45,12 +46,13 @@ public class ConstantTextHint : ISynapseTextHint
 
     /// <summary>
     /// Do not use size, ligne or space balise!
-    /// if you whant use "<" do "\<"
+    /// \n is not suported create a new TextHint instead
     /// </summary>
+    /// <param name="ligne">0 is the top one, the max index is <c><see cref="TextHintList.MaxLigneSize1"/> - 1</c></param>
     public ConstantTextHint(int ligne, string text, HintSide side, int size = 1, int priority = 500)
     {
         Size = Math.Max(Math.Min(size, 3), 1);
-        Ligne = Math.Max(Math.Min(ligne, TextHintList.MaxLigne - 1), 0);
+        Ligne = Math.Max(Math.Min(ligne, TextHintList.MaxLigneSize1 - 1), 0);
         Side = side;
         Priority = priority;
         Text = text.Replace("\n", "");
@@ -99,15 +101,12 @@ public class SynapseTextHint : ISynapseTextHint
     public int Ligne { get; set; }
     public bool IgnoreParsing { get; set; }
 
-    /// <summary>
-    /// Do not use size, ligne or space balise!
-    /// if you whant use "<" do "\<"
-    /// </summary>
+    /// <inheritdoc cref="ConstantTextHint(int, string, HintSide, int, int)"/>
     public SynapseTextHint(int ligne, string text, float displayTime, HintSide side, int size = 1, int priority = 0)
     {
         DisplayTime = displayTime;
-        Size = Math.Max(Math.Min(size, 3), 1);
-        Ligne = Math.Max(Math.Min(ligne, TextHintList.MaxLigne - 1), 0);
+        Size = Mathf.Clamp(TextHintList.SizeMin, size, TextHintList.SizeMax);
+        Ligne = Mathf.Clamp(TextHintList.MaxLigneSize1 - 1, ligne, 0);
         Side = side;
         Priority = priority;
         Text = text.Replace("\n", "");

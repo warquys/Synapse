@@ -14,7 +14,7 @@ public class PermissionService : Service
     private ConfigService _configService;
     private ServerEvents _server;
     public ConfigContainer Container { get; private set; }
-    public Dictionary<string, SynapseGroup> Groups { get; private set; } = new ();
+    public Dictionary<string, SynapseGroup> Groups { get; private set; } = new (StringComparer.OrdinalIgnoreCase);
 
     private readonly SynapseGroup _fallBackDefault = new()
     {
@@ -64,8 +64,12 @@ public class PermissionService : Service
         Reload();
     }
 
-    private SynapseGroup GetGroupInsensitive(string key) => Groups
-        .FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase)).Value;
+    public SynapseGroup GetServerGroup(string key)
+    {
+        if (Groups.TryGetValue(key, out var group))
+            return group;
+        return null;
+    }
 
     private void LoadGroups()
     {
@@ -138,9 +142,17 @@ public class PermissionService : Service
 
     public bool AddServerGroup(SynapseGroup group, string groupName)
     {
-        var current = GetGroupInsensitive(groupName);
+        var current = GetServerGroup(groupName);
         if (current != null) return false;
-        Groups[groupName] = group;
+
+        var duplicatedId = Groups.FirstOrDefault(p => p.Value.GroupId == group.GroupId).Value;
+        while (duplicatedId != default)
+        {
+            group.GroupId++;
+            duplicatedId = Groups.FirstOrDefault(p => p.Value.GroupId == group.GroupId).Value;
+        }
+
+        Groups.Add(groupName, group);
         Store();
         return true;
     }
@@ -154,14 +166,12 @@ public class PermissionService : Service
 
     public bool ModifyServerGroup(string groupName, SynapseGroup group)
     {
-        var current = GetGroupInsensitive(groupName);
+        var current = GetServerGroup(groupName);
         if (current == null) return false;
         Groups[groupName] = group;
         Store();
         return true;
     }
-
-    public SynapseGroup GetServerGroup(string groupName) => GetGroupInsensitive(groupName);
 
     public SynapseGroup GetPlayerGroup(SynapsePlayer player)
     {
@@ -192,10 +202,13 @@ public class PermissionService : Service
 
         return GetDefaultGroup();
     }
-    
+
+    public bool AddPlayerToGroup(string groupName, SynapsePlayer player)
+        => AddPlayerToGroup(groupName, player.UserId);
+
     public bool AddPlayerToGroup(string groupName, string userid)
     {
-        var group = GetGroupInsensitive(groupName);
+        var group = GetServerGroup(groupName);
         if (group == null) return false;
         if (!userid.Contains("@")) return false;
 
@@ -208,6 +221,9 @@ public class PermissionService : Service
         return true;
     }
 
+    public bool RemovePlayerGroup(SynapsePlayer player)
+        => RemovePlayerGroup(player.UserId);
+
     public bool RemovePlayerGroup(string userid)
     {
         if (!userid.Contains("@")) return false;
@@ -219,5 +235,14 @@ public class PermissionService : Service
         }
         if (doSave) Store();
         return doSave;
+    }
+
+    public string GetCompressiveInfo(string groupName)
+    {
+        var group = GetServerGroup(groupName);
+        if (group == null)
+            return "UNKNOW";
+        
+        return group.GetCompressiveInfo();
     }
 }

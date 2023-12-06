@@ -1,13 +1,18 @@
 ﻿using MapGeneration;
 using PlayerRoles.PlayableScps.Scp079;
 using PlayerRoles.PlayableScps.Scp079.Cameras;
+using PluginAPI.Core;
+using Synapse3.SynapseModule.Enums;
 using Synapse3.SynapseModule.Map.Objects;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace Synapse3.SynapseModule.Map.Rooms;
-
+#if DEBUG
+[DebuggerDisplay("{DebuggerDisplay,nq}")]
+#endif
 public class SynapseRoom : IVanillaRoom
 {
     internal SynapseRoom(RoomIdentifier identifier, RoomType type)
@@ -93,4 +98,10 @@ public class SynapseRoom : IVanillaRoom
 
     private List<SynapseDoor> _doors = new List<SynapseDoor>();
     public ReadOnlyCollection<SynapseDoor> Doors => _doors.AsReadOnly();
+
+    // DEBUG
+#if DEBUG
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    public string DebuggerDisplay => Name;
+#endif
 }

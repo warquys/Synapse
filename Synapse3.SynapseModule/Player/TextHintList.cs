@@ -18,7 +18,10 @@ public class TextHintList : ICollection<ISynapseTextHint>
 {
     #region Properties & Variables
 
-    public const int MaxLigne = 54;
+    public const int SizeMax = 3;
+    public const int SizeMin = 1;
+
+    public const int MaxLigneSize1 = 54;
     public const int GosthLigne = 15;
     internal const string BaliseMatchRegex = "<.*?>";
     internal static Regex CompiledBaliseMatchRegex = new Regex(BaliseMatchRegex, RegexOptions.Compiled);
@@ -68,8 +71,8 @@ public class TextHintList : ICollection<ISynapseTextHint>
             return;
         }
 
-        var lignes = new Line[MaxLigne];
-        for (int i = 0; i < MaxLigne; i++)
+        var lignes = new Line[MaxLigneSize1];
+        for (int i = 0; i < MaxLigneSize1; i++)
             lignes[i] = new Line();
 
         foreach (var textHint in _textHints.OrderBy(p => p.Priority))
@@ -124,7 +127,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
         var ligne = hint.Ligne;
         var size = hint.Size;
 
-        if (ligneCount * hint.Size >= MaxLigne) return;
+        if (ligneCount * hint.Size >= MaxLigneSize1) return;
         if (ligne - hint.Size + 1 < 0) return;
 
         for (int i = 0; i < ligneCount; i++)
@@ -147,7 +150,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
             lignes[dest].Midle = textToInsert[i];
             for (int j = 1; j < size; j++)
             {
-                lignes[dest - j].Gosht = true;
+                lignes[dest - j].Ghost = true;
             }
 
         }
@@ -162,7 +165,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
         var ligne = hint.Ligne;
         var size = hint.Size;
 
-        if (ligneCount * hint.Size >= MaxLigne) return;
+        if (ligneCount * hint.Size >= MaxLigneSize1) return;
         if (ligne - hint.Size + 1 < 0) return;
         
         for (int i = 0; i < ligneCount; i++)
@@ -183,7 +186,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
             lignes[dest].Left = textToInsert[i];
             for (int j = 1; j < size; j++)
             {
-                lignes[dest - j].Gosht = true;
+                lignes[dest - j].Ghost = true;
             }
 
         }
@@ -198,7 +201,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
         var ligne = hint.Ligne;
         var size = hint.Size;
         
-        if (ligneCount * hint.Size >= MaxLigne) return;
+        if (ligneCount * hint.Size >= MaxLigneSize1) return;
         if (ligne - hint.Size + 1 < 0) return;
 
         for (int i = 0; i < ligneCount; i++)
@@ -219,7 +222,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
             lignes[dest].Right = textToInsert[i];
             for (int j = 1; j < size; j++)
             {
-                lignes[dest - j].Gosht = true;
+                lignes[dest - j].Ghost = true;
             }
 
         }
@@ -230,7 +233,7 @@ public class TextHintList : ICollection<ISynapseTextHint>
         //<mspace> allow to get char at same size
         //<size>   is the win space for more txt
         var message = "\n";
-        for (int i = 0; i < MaxLigne; i++)
+        for (int i = 0; i < MaxLigneSize1; i++)
         {
             message += Lignes[i];
         }
@@ -298,14 +301,14 @@ public class TextHintList : ICollection<ISynapseTextHint>
         public AnalysedSide Left { get; set; }
         public AnalysedSide Right { get; set; }
         public AnalysedSide Midle { get; set; }
-        public bool LeftFree => !Gosht && Left == null && Midle == null;
-        public bool RightFree => !Gosht && Right == null && Midle == null;
-        public bool MidleFree => !Gosht && Left == null && Right == null && Midle == null;
-        public bool Gosht { get; set; } = false;
+        public bool LeftFree => !Ghost && Left == null && Midle == null;
+        public bool RightFree => !Ghost && Right == null && Midle == null;
+        public bool MidleFree => !Ghost && Left == null && Right == null && Midle == null;
+        public bool Ghost { get; set; } = false;
 
         public override string ToString()
         {
-            if (Gosht) return "";
+            if (Ghost) return "";
             
             var text = "";
             if (Midle == null)

@@ -12,34 +12,41 @@ namespace Synapse3.SynapseModule.Command.SynapseCommands;
 )]
 public class PermissionCommand : SynapseCommand
 {
+    private readonly PermissionService _permission;
+
+    public PermissionCommand(PermissionService permission)
+    {
+        _permission = permission;
+    }
+
     public override void Execute(SynapseContext context, ref CommandResult result)
     {
         if (context.Arguments.Length < 1) context.Arguments = new[] { "" };
-        var permissionService = Synapse.Get<PermissionService>();
 
         switch (context.Arguments[0].ToUpper())
         {
             case "ME":
                 var group = context.Player.SynapseGroup;
-                result.Response = "\nYour Group:" +
-                                  $"\nDefault: {group.Default}" +
-                                  $"\nNorthWood: {group.NorthWood}" +
-                                  $"\nRemoteAdmin: {group.RemoteAdmin}" +
-                                  $"\nBadge: {group.Badge}" +
-                                  $"\nColor: {group.Color}" +
-                                  $"\nCover: {group.Cover}" +
-                                  $"\nHidden: {group.Hidden}" +
-                                  $"\nKickPower: {group.KickPower}" +
-                                  $"\nRequiredKickPower: {group.RequiredKickPower}" +
-                                  "\nPermissions:";
+                result.Response = "Your " + group.GetCompressiveInfo();
+                break;
 
-                foreach (var perm in group.Permissions)
-                    result.Response += $"\n    - {perm}";
+            case "GROUP":
+                if (!context.Player.HasPermission("synapse.permission.groups"))
+                {
+                    result.Response = "You don't have permission to get all groups (synapse.permission.groups)";
+                    result.StatusCode = CommandStatusCode.Forbidden;
+                    break;
+                }
 
-                result.Response += "\nInheritance:";
-                foreach (var inherit in group.Inheritance)
-                    result.Response += $"\n    - {inherit}";
+                if (context.Arguments.Length < 2)
+                {
+                    result.Response = "Missing group name";
+                    result.StatusCode = CommandStatusCode.BadSyntax;
+                    break;
+                }
 
+                var groupInfo = context.Arguments[1];
+                result.Response = groupInfo + " " + _permission.GetCompressiveInfo(groupInfo);
                 break;
 
             case "GROUPS":
@@ -51,7 +58,7 @@ public class PermissionCommand : SynapseCommand
                 }
 
                 var msg = "All Groups:";
-                foreach (var pair in permissionService.Groups)
+                foreach (var pair in _permission.Groups)
                     msg += $"\n{pair.Key} Badge: {pair.Value.Badge}";
 
                 result.Response = msg;
@@ -76,7 +83,7 @@ public class PermissionCommand : SynapseCommand
 
                 if (context.Arguments[1] == "-1")
                 {
-                    permissionService.RemovePlayerGroup(playerid);
+                    _permission.RemovePlayerGroup(playerid);
                     result.Response = $"Removed {playerid} player group.";
                     break;
                 }
@@ -84,19 +91,19 @@ public class PermissionCommand : SynapseCommand
                 var setGroup = context.Arguments[1];
                 try
                 {
-                    if (permissionService.AddPlayerToGroup(setGroup, playerid))
+                    if (_permission.AddPlayerToGroup(setGroup, playerid))
                     {
                         result.Response = $"Set {playerid} player group to {setGroup}.";
                         break;
                     }
 
                     result.Response = "Invalid UserID or GroupName";
-                    result.StatusCode = CommandStatusCode.Error;
+                    result.StatusCode = CommandStatusCode.BadSyntax;
                 }
                 catch
                 {
                     result.Response = "Invalid GroupName";
-                    result.StatusCode = CommandStatusCode.Error;
+                    result.StatusCode = CommandStatusCode.BadSyntax;
                 }
 
                 break;
@@ -112,23 +119,24 @@ public class PermissionCommand : SynapseCommand
                 if (context.Arguments.Length < 2)
                 {
                     result.Response = "Missing group name";
-                    result.StatusCode = CommandStatusCode.Error;
+                    result.StatusCode = CommandStatusCode.BadSyntax;
                 }
 
-                if (permissionService.DeleteServerGroup(context.Arguments[1]))
+                if (_permission.DeleteServerGroup(context.Arguments[1]))
                 {
                     result.Response = "Group successfully deleted";
                 }
                 else
                 {
                     result.Response = "No Group with that Name was found";
-                    result.StatusCode = CommandStatusCode.Error;
+                    result.StatusCode = CommandStatusCode.BadSyntax;
                 }
                 break;
 
             default:
                 result.Response = "All Permission Commands:" +
                                   "\nPermission me - Gives you information about your Role" +
+                                  "\nPermission group {Group} - Gives you information about a Group" + 
                                   "\nPermission groups - Gives you a List of All Groups" +
                                   "\nPermission setgroup {Group} {UserID} - Sets a User group" +
                                   "\nPermission delete {Group}";
