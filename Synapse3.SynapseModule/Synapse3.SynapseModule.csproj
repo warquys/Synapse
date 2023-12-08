@@ -90,6 +90,7 @@
       <PackageReference Include="NeuronModding.Modules.Commands" Version="1.0.2" />
       <PackageReference Include="NeuronModding.Modules.Configs" Version="1.0.2" />
       <PackageReference Include="NeuronModding.Modules.Patcher" Version="1.0.2" />
+      <PackageReference Include="NLua" Version="1.6.3" />
     </ItemGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

@@ -33,7 +33,7 @@ public class PermissionCommand : SynapseCommand
             case "GROUP":
                 if (!context.Player.HasPermission("synapse.permission.groups"))
                 {
-                    result.Response = "You don't have permission to get all groups (synapse.permission.groups)";
+                    result.Response = "You don't have permission to get info on a group (synapse.permission.groups)";
                     result.StatusCode = CommandStatusCode.Forbidden;
                     break;
                 }

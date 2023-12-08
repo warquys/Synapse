@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Synapse3.SynapseModule.Map.Objects;
 
+// TODO: hook the creation of primitiv
 public class SynapsePrimitive : SynapseToyObject<PrimitiveObjectToy>
 {
     public static PrimitiveObjectToy Prefab { get; internal set; }
@@ -53,6 +54,7 @@ public class SynapsePrimitive : SynapseToyObject<PrimitiveObjectToy>
         if(configuration.Physics)
             ApplyPhysics();
     }
+
     private void SetUp()
     {
         Map._synapsePrimitives.Add(this);

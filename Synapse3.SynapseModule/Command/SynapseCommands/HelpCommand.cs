@@ -91,7 +91,7 @@ public class HelpCommand : SynapseCommand
         IEnumerable<CommandSystem.ICommand> vanillaCommands, SynapsePlayer player,CommandPlatform platform)
     {
         var msg = _configService.Translation.Get(player).CommandHelp;
-        foreach (var command in vanillaCommands)
+        foreach (var command in vanillaCommands.OrderBy(p => p.Command))
         {
             msg += $"\n{command.Command}";
 
@@ -117,7 +117,7 @@ public class HelpCommand : SynapseCommand
 
         msg += "\n" + _configService.Translation.Get(player).CommandHelpSecond;
 
-        foreach (var customCommand in customCommands)
+        foreach (var customCommand in customCommands.OrderBy(p => p.Meta.CommandName))
         {
             if (customCommand.Meta is SynapseCommandAttribute synapseCommandAttribute)
             {

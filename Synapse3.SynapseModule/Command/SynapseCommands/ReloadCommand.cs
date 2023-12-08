@@ -8,7 +8,6 @@ namespace Synapse3.SynapseModule.Command.SynapseCommands;
 [SynapseRaCommand(
     CommandName = "Reload",
     Aliases = new[] { "rl" },
-    Parameters = new string[] { },
     Description = "Reloads Synapse",
     Permission = "synapse.command.reload",
     Platforms = new [] { CommandPlatform.RemoteAdmin, CommandPlatform.ServerConsole }

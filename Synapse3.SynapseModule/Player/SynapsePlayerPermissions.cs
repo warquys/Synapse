@@ -97,7 +97,7 @@ public partial class SynapsePlayer
     /// Reloads the Permissions of the Player
     /// </summary>
     /// <param name="hideBadage"></param>
-    public void RefreshPermission(bool hideBadage) //TODO: CHECK THIS
+    public void RefreshPermission(bool hideBadage)
     {
         var group = new UserGroup
         {

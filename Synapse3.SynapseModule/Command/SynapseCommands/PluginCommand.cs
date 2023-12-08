@@ -39,7 +39,7 @@ public class PluginCommand : SynapseCommand
             if (plugin == null)
             {
                 result.Response = "No Plugin was found";
-                result.StatusCode = CommandStatusCode.Error;
+                result.StatusCode = CommandStatusCode.NotFound;
                 return;
             }
 
