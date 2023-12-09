@@ -159,11 +159,7 @@ public class DebugService : Service
         {
          
             case KeyCode.Alpha2:
-                SynapseLogger<DebugService>.Info("Effects: ");
-                foreach (var effect in ev.Player.PlayerEffectsController.AllEffects)
-                {
-                    SynapseLogger<DebugService>.Info(effect.name);
-                }
+
                 break;
 
         }

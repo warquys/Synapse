@@ -994,9 +994,8 @@ public static class Scp106AttackPatch
         else
         {
             Hitmarker.SendHitmarkerDirectly(ev.Scp, 1f);
+            return true;
         }
-
-        return true;
     }
 }
 

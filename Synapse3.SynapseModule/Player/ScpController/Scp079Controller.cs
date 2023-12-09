@@ -9,7 +9,6 @@ namespace Synapse3.SynapseModule.Player.ScpController;
 public class Scp079Controller : ScpControllerBase<Scp079Role>
 {
     //TODO:
-    
     internal Scp079Controller(SynapsePlayer player) : base(player) { }
 
 
