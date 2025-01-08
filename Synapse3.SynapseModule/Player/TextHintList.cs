@@ -11,6 +11,8 @@ using UnityEngine;
 
 namespace Synapse3.SynapseModule.Player;
 
+#if HINT_LIST
+
 /// <summary>
 /// Do not use Rich Text 
 /// </summary>
@@ -548,3 +550,4 @@ public class TextHintList : ICollection<ISynapseTextHint>
 
     #endregion
 }
+#endif

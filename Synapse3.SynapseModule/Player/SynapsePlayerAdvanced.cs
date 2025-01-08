@@ -18,9 +18,9 @@ public partial class SynapsePlayer
     public ItemInventory Inventory { get; }
 
     public BroadcastList ActiveBroadcasts { get; }
-
+#if HINT_LIST
     public TextHintList ActiveHint { get; }
-    
+#endif
     public ScpController.MainScpController MainScpController { get; }
 
     public Dictionary<string, object> Data { get; set; } = new();

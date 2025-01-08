@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Synapse3.SynapseModule.Player;
 
+#if HINT_LIST
 public interface ISynapseTextHint
 {
     HintSide Side { get; }
@@ -135,3 +136,4 @@ public class SynapseTextHint : ISynapseTextHint
         Displaying = false;
     }
 }
+#endif

@@ -49,9 +49,11 @@ public partial class SynapsePlayer
             RankColor = _server.ValidatedBadgeColors.ElementAt(Random.Range(0, _server.ValidatedBadgeColors.Count));
         }
 
+#if HINT_LIST
         if (Time.time >= ActiveHint.nextUpdate)
         {
             ActiveHint.UpdateText();
         }
+#endif
     }
 }
